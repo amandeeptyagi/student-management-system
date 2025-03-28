@@ -23,6 +23,7 @@ export const addCourse = async (req, res) => {
 export const getCourses = async (req, res) => {
   try {
     const courses = await Course.find().populate("subjects");
+    // .populate("students", "rollNo name");
     res.json(courses);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
