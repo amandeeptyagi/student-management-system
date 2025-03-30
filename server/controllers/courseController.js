@@ -1,5 +1,6 @@
 import Course from "../models/CourseModel.js";
 import Subject from "../models/SubjectModel.js";
+import Lecture from "../models/LectureModel.js";
 
 // ✅ 1. Add a New Course
 export const addCourse = async (req, res) => {
@@ -34,8 +35,23 @@ export const getCourses = async (req, res) => {
 export const deleteCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    await Course.findByIdAndDelete(id);
-    res.json({ message: "Course deleted successfully" });
+     // Find all subjects related to this course
+     const subjects = await Subject.find({ course: id });
+
+     // Extract subject IDs
+     const subjectIds = subjects.map(subject => subject._id);
+ 
+     // Delete all related subjects
+     await Subject.deleteMany({ course: id });
+ 
+     // Delete all lectures related to this course and its subjects
+     await Lecture.deleteMany({ $or: [{ course: id }, { subject: { $in: subjectIds } }] });
+ 
+     // Finally, delete the course
+     await Course.findByIdAndDelete(id);
+ 
+     res.json({ message: "Course, related subjects, and lectures deleted successfully" });
+    
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -60,8 +76,25 @@ export const addSubject = async (req, res) => {
 export const deleteSubject = async (req, res) => {
   try {
     const { id } = req.params;
-    await Subject.findByIdAndDelete(id);
-    res.json({ message: "Subject deleted successfully" });
+    // await Subject.findByIdAndDelete(id);
+ // Find the subject to be deleted
+ const deletedSubject = await Subject.findByIdAndDelete(id);
+
+ // Check if subject exists
+ if (!deletedSubject) {
+   return res.status(404).json({ message: "Subject not found" });
+ }
+
+ // Remove the subject reference from the Course collection
+ await Course.updateOne(
+   { _id: deletedSubject.course },
+   { $pull: { subjects: deletedSubject._id } }
+ );
+
+ // Delete all lectures related to this subject
+ await Lecture.deleteMany({ subject: deletedSubject._id });
+
+ res.json({ message: "Subject and related lectures deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

@@ -20,6 +20,9 @@ export const assignLecture = async (req, res) => {
     const lecture = new Lecture({ teacher, course, subject, timeSlot });
     await lecture.save();
 
+    //subjects ke saath teacher ko assign kar dega
+    await Subject.findByIdAndUpdate(subjectId, { teacher: teacherId });
+
     res.status(201).json({ message: "Lecture assigned successfully", lecture });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -39,3 +42,21 @@ export const getTeacherLectures = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const deleteLecture = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find and delete the lecture
+    const deletedLecture = await Lecture.findByIdAndDelete(id);
+
+    if (!deletedLecture) {
+      return res.status(404).json({ message: "Lecture not found" });
+    }
+
+    res.json({ message: "Lecture deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+

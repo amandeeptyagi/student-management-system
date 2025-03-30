@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import Admin from "../models/AdminModel.js";
+import Student from "../models/StudentModel.js";
+import Teacher from "../models/TeacherModel.js";
 
 // Middleware to protect routes
 export const protect = async (req, res, next) => {
@@ -11,7 +13,22 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select("-password");
+
+    if(decoded.role === "admin"){
+      req.user = await Admin.findById(decoded.id).select("-password");
+      // console.log(req.user);
+    }
+    
+    if(decoded.role === "teacher"){
+      req.user = await Teacher.findById(decoded.id).select("-password");
+      // console.log(req.user);
+    }
+    
+    if(decoded.role === "student"){
+      req.user = await Student.findById(decoded.id).select("-password");
+      // console.log(req.user);
+    }
+    
 
     if (!req.user) {
       return res.status(401).json({ message: "User not found" });
@@ -31,3 +48,23 @@ export const adminOnly = (req, res, next) => {
     res.status(403).json({ message: "Access Denied: Admins only" });
   }
 };
+
+// Middleware for teacher-only access
+export const teacherOnly = (req, res, next) => {
+  if (req.user && req.user.role === "teacher") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access Denied: Teachers only" });
+  }
+};
+
+// Middleware for student-only access
+export const studentOnly = (req, res, next) => {
+  if (req.user && req.user.role === "student") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access Denied: Students only" });
+  }
+};
+
+
