@@ -34,18 +34,18 @@ export const registerAdmin = async (req, res) => {
 // Login
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
-    let user = await Admin.findOne({ email });
-    // let role = "admin";
+    let user = null;
 
-    if (!user) {
-      user = await Teacher.findOne({ email });
-      // role = "teacher";
+    if (role==="admin") {
+      user = await Admin.findOne({ email });
     }
-    if (!user) {
+    if (role==="teacher") {
+      user = await Teacher.findOne({ email });
+    }
+    if (role==="student") {
       user = await Student.findOne({ email });
-      // role = "student";
     }
 
     if (user && user.password == password) {

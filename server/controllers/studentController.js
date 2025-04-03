@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 // Get Student Profile
 export const getStudentProfile = async (req, res) => {
   try {
-    const student = await Student.findById(req.user.id).select("-password");
+    const student = await Student.findById(req.user.id).select("-password").populate("course", "name");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
     res.json(student);

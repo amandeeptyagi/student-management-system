@@ -10,6 +10,8 @@ import teacherRoutes from "./routes/teacherRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import lectureRoutes from "./routes/lectureRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
+import { corsMiddleware } from "./middlewares/corsMiddleware.js";
+
 
 dotenv.config();
 connectDB();
@@ -18,7 +20,9 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+// app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
+app.use(corsMiddleware);
+// app.use(cors());
 app.use(cookieParser());
 app.use(morgan("dev"));
 

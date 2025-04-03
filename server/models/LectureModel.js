@@ -20,6 +20,10 @@ const lectureSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  day: {
+    type: String,
+    required: true,
+  },
 });
 
 const Lecture = mongoose.model("Lecture", lectureSchema);

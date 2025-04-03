@@ -5,7 +5,7 @@ import Subject from "../models/SubjectModel.js";
 
 export const assignLecture = async (req, res) => {
   try {
-    const { teacherId, courseId, subjectId, timeSlot } = req.body;
+    const { teacherId, courseId, subjectId, timeSlot, day } = req.body;
 
     // Validate Teacher, Course & Subject
     const teacher = await Teacher.findById(teacherId);
@@ -17,7 +17,7 @@ export const assignLecture = async (req, res) => {
     }
 
     // Create new Lecture
-    const lecture = new Lecture({ teacher, course, subject, timeSlot });
+    const lecture = new Lecture({ teacher, course, subject, timeSlot, day });
     await lecture.save();
 
     //subjects ke saath teacher ko assign kar dega
@@ -29,19 +29,28 @@ export const assignLecture = async (req, res) => {
   }
 };
 
-// Fetch lectures for a teacher
-export const getTeacherLectures = async (req, res) => {
-  try {
-    const { teacherId } = req.params;
-    const lectures = await Lecture.find({ teacher: teacherId })
-      .populate("course", "name")
-      .populate("subject", "name");
 
+// Fetch all lectures for all teachers
+export const getAllLectures = async (req, res) => {
+  try {
+    // Fetch all lectures
+    const lectures = await Lecture.find()
+      .populate("course", "name")   // Populate course information
+      .populate("subject", "name"); // Populate subject information
+    
+    // Check if any lectures are found
+    if (!lectures || lectures.length === 0) {
+      return res.status(404).json({ message: "No lectures found." });
+    }
+
+    // Respond with the list of all lectures
     res.status(200).json(lectures);
   } catch (error) {
+    // Handle errors with appropriate error messages
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 export const deleteLecture = async (req, res) => {
   try {
