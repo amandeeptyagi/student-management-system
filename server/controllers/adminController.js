@@ -49,13 +49,11 @@ export const changeAdminPassword = async (req, res) => {
     }
 
     // Check if old password is correct
-    // const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (oldPassword !== admin.password) {
       return res.status(400).json({ message: "Old password is incorrect" });
     }
 
-    // Hash new password and save
-    // const salt = await bcrypt.genSalt(10);
+    // Save new password
     admin.password = newPassword
     await admin.save();
 
@@ -66,18 +64,17 @@ export const changeAdminPassword = async (req, res) => {
   }
 };
 
-// ✅ 1. Add a New Student
+//  Add a New Student
 export const addStudent = async (req, res) => {
   try {
-    const { rollNo, name, email, courseId, password } = req.body;
+    const { rollNo, name, email, courseId, department, address, password } = req.body;
 
     const studentExists = await Student.findOne({ email });
     if (studentExists) {
       return res.status(400).json({ message: "Student already exists" });
     }
 
-    // const hashedPassword = await bcrypt.hash(password, 10);
-    const student = new Student({ rollNo, name, email, course: courseId, password, role:"student" });
+    const student = new Student({ rollNo, name, email, course: courseId, department, address, password, role:"student" });
 
     await student.save();
     await Course.findByIdAndUpdate(courseId, { $push: { students: student._id } });
@@ -87,7 +84,7 @@ export const addStudent = async (req, res) => {
   }
 };
 
-// ✅ 2. Get All Students (Grouped by Course)
+//  Get All Students (Grouped by Course)
 export const getStudents = async (req, res) => {
   try {
     const students = await Course.find().populate({
@@ -104,7 +101,7 @@ export const getStudents = async (req, res) => {
   }
 };
 
-// ✅ 3. Edit Student
+//  Edit Student
 export const updateStudent = async (req, res) => {
   try {
     const { rollNo, name, email, courseId } = req.body;
@@ -126,7 +123,7 @@ export const updateStudent = async (req, res) => {
   }
 };
 
-// ✅ 4. Delete Student
+//  Delete Student
 export const deleteStudent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -135,7 +132,7 @@ export const deleteStudent = async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // ✅ Remove student from course's students array
+    // Remove student from course's students array
     await Course.findByIdAndUpdate(student.course, { $pull: { students: id } });
     await Student.findByIdAndDelete(id);
 
@@ -145,7 +142,7 @@ export const deleteStudent = async (req, res) => {
   }
 };
 
-// ✅ 5. Add a New Teacher
+//  Add a New Teacher
 export const addTeacher = async (req, res) => {
   try {
     const { name, email, specialization, password } = req.body;
@@ -155,7 +152,6 @@ export const addTeacher = async (req, res) => {
       return res.status(400).json({ message: "Teacher already exists" });
     }
 
-    // const hashedPassword = await bcrypt.hash(password, 10);
 
     const teacher = new Teacher({ name, email, specialization, password, role:"teacher" });
     await teacher.save();
@@ -166,7 +162,7 @@ export const addTeacher = async (req, res) => {
   }
 };
 
-// ✅ 6. Get All Teachers
+//  Get All Teachers
 export const getTeachers = async (req, res) => {
   try {
     const teachers = await Teacher.find();
@@ -176,7 +172,7 @@ export const getTeachers = async (req, res) => {
   }
 };
 
-// ✅ 7. Edit Teacher
+//  Edit Teacher
 export const updateTeacher = async (req, res) => {
   try {
     const { name, email, specialization } = req.body;
@@ -196,7 +192,7 @@ export const updateTeacher = async (req, res) => {
   }
 };
 
-// ✅ 8. Delete Teacher
+// Delete Teacher
 export const deleteTeacher = async (req, res) => {
   try {
     const { id } = req.params;

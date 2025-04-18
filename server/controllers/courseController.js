@@ -2,7 +2,7 @@ import Course from "../models/CourseModel.js";
 import Subject from "../models/SubjectModel.js";
 import Lecture from "../models/LectureModel.js";
 
-// ✅ 1. Add a New Course
+//  Add a New Course
 export const addCourse = async (req, res) => {
   try {
     const { name } = req.body;
@@ -20,7 +20,7 @@ export const addCourse = async (req, res) => {
   }
 };
 
-// ✅ 2. Get All Courses
+//  Get All Courses
 export const getCourses = async (req, res) => {
   try {
     const courses = await Course.find().populate("subjects");
@@ -31,7 +31,7 @@ export const getCourses = async (req, res) => {
   }
 };
 
-// ✅ 3. Delete a Course
+//  Delete a Course
 export const deleteCourse = async (req, res) => {
   try {
     const { id } = req.params;
@@ -57,7 +57,7 @@ export const deleteCourse = async (req, res) => {
   }
 };
 
-// ✅ 4. Add Subject to Course
+//  Add Subject to Course
 export const addSubject = async (req, res) => {
   try {
     const { courseId, subjectName } = req.body;
@@ -72,7 +72,7 @@ export const addSubject = async (req, res) => {
   }
 };
 
-// ✅ 5. Delete Subject from Course
+//  Delete Subject from Course
 export const deleteSubject = async (req, res) => {
   try {
     const { id } = req.params;
