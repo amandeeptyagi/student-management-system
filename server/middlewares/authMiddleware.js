@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import SuperAdmin from "../models/SuperAdminModel.js";
 import Admin from "../models/AdminModel.js";
 import Student from "../models/StudentModel.js";
 import Teacher from "../models/TeacherModel.js";
@@ -14,6 +15,11 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    if (decoded.role === "superadmin") {
+      req.user = await SuperAdmin.findById(decoded.id).select("-password");
+      // console.log(req.user);
+    }
+
     if(decoded.role === "admin"){
       req.user = await Admin.findById(decoded.id).select("-password");
       // console.log(req.user);
@@ -28,7 +34,6 @@ export const protect = async (req, res, next) => {
       req.user = await Student.findById(decoded.id).select("-password");
       // console.log(req.user);
     }
-    
 
     if (!req.user) {
       return res.status(401).json({ message: "User not found" });
@@ -37,6 +42,15 @@ export const protect = async (req, res, next) => {
     next();
   } catch (error) {
     res.status(401).json({ message: "Not authorized, invalid token" });
+  }
+};
+
+// Middleware for superadmin-only access
+export const superAdminOnly = (req, res, next) => {
+  if (req.user && req.user.role === "superadmin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access Denied: Super Admins only" });
   }
 };
 

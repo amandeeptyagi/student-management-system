@@ -4,6 +4,35 @@ import Teacher from "../models/TeacherModel.js";
 import Student from "../models/StudentModel.js";
 import Course from "../models/CourseModel.js";
 
+// Register Admin
+export const registerAdmin = async (req, res) => {
+  try {
+    const { name, email, mobile, password, instituteName, address } = req.body;
+
+    const userExists = await Admin.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "Admin already exists" });
+    }
+
+    const user = new Admin({
+      name,
+      email,
+      mobile,
+      password,
+      instituteName,
+      address,
+      role: "admin",
+    });
+
+    const saved = await user.save();
+    generateToken(res, saved._id, saved.role, null);
+
+    res.status(201).json({ _id: saved._id, name: saved.name, email: saved.email, mobile: saved.mobile, instituteName: saved.instituteName, address: saved.address, role: saved.role });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Get Admin Profile
 export const getAdminProfile = async (req, res) => {
   try {
@@ -21,18 +50,19 @@ export const getAdminProfile = async (req, res) => {
 
 // Update Admin Profile
 export const updateAdminProfile = async (req, res) => {
+  const { name, email, mobile, instituteName, address } = req.body;
   try {
-    const user = await Admin.findById(req.user.id);
+    const admin = await Admin.findById(req.user._id);
+    if (!admin) return res.status(404).json({ message: "Admin not found" })
 
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.email = req.body.email || user.email;
+    admin.name = name || admin.name;
+    admin.email = email || admin.email;
+    admin.mobile = mobile || admin.mobile;
+    admin.instituteName = instituteName || admin.instituteName;
+    admin.address = address || admin.address;
 
-      const updatedAdmin = await user.save();
-      res.json({ _id: updatedAdmin._id, name: updatedAdmin.name, email: updatedAdmin.email, role: updatedAdmin.role });
-    } else {
-      res.status(404).json({ message: "Admin not found" });
-    }
+    const updated = await admin.save();
+    res.status(201).json({ _id: updated._id, name: updated.name, email: updated.email, mobile: updated.mobile, instituteName: updated.instituteName, address: updated.address, role: updated.role });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -64,6 +94,16 @@ export const changeAdminPassword = async (req, res) => {
   }
 };
 
+// Delete Admin profile
+export const deleteAdminProfile = async (req, res) => {
+  try {
+    await Admin.findByIdAndDelete(req.user._id);
+    res.status(200).json({ message: "Admin profile deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete account" });
+  }
+}
+
 //  Add a New Student
 export const addStudent = async (req, res) => {
   try {
@@ -74,7 +114,7 @@ export const addStudent = async (req, res) => {
       return res.status(400).json({ message: "Student already exists" });
     }
 
-    const student = new Student({ rollNo, name, email, course: courseId, department, address, password, role:"student" });
+    const student = new Student({ rollNo, name, email, course: courseId, department, address, password, role: "student" });
 
     await student.save();
     await Course.findByIdAndUpdate(courseId, { $push: { students: student._id } });
@@ -153,7 +193,7 @@ export const addTeacher = async (req, res) => {
     }
 
 
-    const teacher = new Teacher({ name, email, specialization, password, role:"teacher" });
+    const teacher = new Teacher({ name, email, specialization, password, role: "teacher" });
     await teacher.save();
 
     res.status(201).json({ message: "Teacher added successfully", teacher });

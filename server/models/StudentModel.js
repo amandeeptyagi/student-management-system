@@ -4,11 +4,13 @@ const studentSchema = new mongoose.Schema({
   rollNo: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  mobile: { type: String, required: true, unique: true },
   course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
   department: { type: String, required: true },
   address: { type: String, required: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ["admin", "teacher", "student"], required: true },
+  role: { type: String, enum: ["admin", "teacher", "student", "superadmin"], required: true },
+  admin: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' }
 }, { timestamps: true });
 
 // // Hash password before saving user
