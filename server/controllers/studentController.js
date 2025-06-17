@@ -5,20 +5,29 @@ import bcrypt from "bcryptjs";
 // Get Student Profile
 export const getStudentProfile = async (req, res) => {
   try {
-    const student = await Student.findById(req.user.id).select("-password").populate("course", "name");
-    if (!student) return res.status(404).json({ message: "Student not found" });
+    const student = await Student.findById(req.user._id)
+      .populate({
+        path: "course",
+        select: "name duration semesters",
+      })
+      .select("-password");
 
-    res.json(student);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    res.status(200).json({ student });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Failed to fetch student profile", error });
   }
 };
+
 
 // Change Password
 export const updateStudentPassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
-    const student = await Student.findById(req.user.id);
+    const student = await Student.findById(req.user._id);
 
     if (!student) return res.status(404).json({ message: "Student not found" });
 
@@ -36,18 +45,29 @@ export const updateStudentPassword = async (req, res) => {
 };
 
 //get students course details
-export const getStudentCourses = async (req, res) => {
+export const getCourseDetails = async (req, res) => {
   try {
-    const studentCourses = await Course.find({ students: req.user.id })
-      .populate("subjects", "name")
+    const student = await Student.findById(req.user._id);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    const course = await Course.findOne({ _id: student.course })
       .populate({
-        path: "subjects",
-        // select: 'name teacher',
-        populate: { path: "teacher", select: "name" },
+        path: "semesters.subjectIds",
+        model: "Subject",
       });
 
-    res.json(studentCourses);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    const currentSemester = course.semesters.find(s => s.number === student.semester);
+    if (!currentSemester) return res.status(404).json({ message: "Semester not found in course" });
+
+    res.status(200).json({
+      courseName: course.name,
+      duration: course.duration,
+      semester: student.semester,
+      subjects: currentSemester.subjectIds,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Failed to fetch course details", error });
   }
 };

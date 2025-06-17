@@ -1,4 +1,5 @@
 import express from "express";
+import { checkLoginAllowed } from "../middlewares/checkSystemAccess.js";
 
 import { 
   loginSuperAdmin,
@@ -8,7 +9,7 @@ import {
 const router = express.Router();
 
 router.post("/login-superadmin", loginSuperAdmin);
-router.post("/login", login);
+router.post("/login",checkLoginAllowed, login);
 
 
 

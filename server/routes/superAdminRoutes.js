@@ -10,13 +10,14 @@ import {
   getAllAdmins,
   toggleRegistration,
   toggleLogin,
+  getSystemConfig,
   registerSuperAdmin,
 } from "../controllers/superAdminController.js";
 import { protect, superAdminOnly } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// ⚠️ Only use this once, then disable/remove it in production
+// Only use this once, then disable/remove it in production, or use script for registeration of superadmin
 router.post("/register", registerSuperAdmin);
 
 // All routes below are protected and only accessible by superadmin
@@ -34,5 +35,6 @@ router.delete("/admin/:id", deleteAdmin);
 
 router.patch("/toggle-registration", toggleRegistration);
 router.patch("/toggle-login", toggleLogin);
+router.get("/config", protect, superAdminOnly, getSystemConfig);
 
 export default router;

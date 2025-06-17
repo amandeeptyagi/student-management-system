@@ -1,10 +1,13 @@
 import express from "express";
-import { getAdminProfile, updateAdminProfile, changeAdminPassword, deleteAdminProfile, addStudent, getStudents, updateStudent, deleteStudent, addTeacher, getTeachers, updateTeacher, deleteTeacher } from "../controllers/adminController.js";
+import { registerAdmin, getAdminProfile, updateAdminProfile, changeAdminPassword, deleteAdminProfile, addStudent, getAllStudents, updateStudent, deleteStudent, addTeacher, getTeachers, updateTeacher, deleteTeacher } from "../controllers/adminController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
+import { checkAdminRegistrationAllowed } from "../middlewares/checkSystemAccess.js";
+
 
 const router = express.Router();
 
 // Profile & Password Management Routes
+router.post("/register",checkAdminRegistrationAllowed, registerAdmin);
 router.get("/profile", protect, adminOnly, getAdminProfile);
 router.put("/profile/update", protect, adminOnly, updateAdminProfile);
 router.put("/profile/change-password", protect, adminOnly, changeAdminPassword);
@@ -12,7 +15,7 @@ router.delete("/profile/delete", protect, adminOnly, deleteAdminProfile);
 
 // student management routes
 router.post("/student/add", protect, adminOnly, addStudent);
-router.get("/students", protect, adminOnly, getStudents);
+router.get("/students", protect, adminOnly, getAllStudents);
 router.put("/student/:id", protect, adminOnly, updateStudent);
 router.delete("/student/:id", protect, adminOnly, deleteStudent);
 

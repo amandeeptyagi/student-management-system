@@ -8,7 +8,7 @@ const teacherSchema = new mongoose.Schema({
   department: { type: String, required: true },
   address: { type: String, required: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ["admin", "teacher", "student", "superadmin"], required: true },
+  role: { type: String, enum: ["teacher"], required: true, default: "teacher" },
   admin: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" }
 }, { timestamps: true });
 

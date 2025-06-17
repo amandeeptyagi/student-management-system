@@ -205,6 +205,22 @@ export const toggleLogin = async (req, res) => {
   }
 };
 
+// Get system config (for Super Admin)
+export const getSystemConfig = async (req, res) => {
+  try {
+    let config = await Config.findOne();
+    if (!config) {
+      // If not found, return default values
+      config = new Config(); 
+      await config.save();
+    }
+    res.status(200).json(config);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to retrieve system config" });
+  }
+};
+
+
 
 
 // Register Super Admin (one-time use or controlled)

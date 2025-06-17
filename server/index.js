@@ -30,11 +30,11 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/superadmin", superAdminRoutes);
-app.use("/api/admins", adminRoutes);
-app.use("/api/teachers", teacherRoutes);
-app.use("/api/students", studentRoutes);
-app.use("/api/lectures", lectureRoutes);
-app.use("/api/courses", courseRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/teacher", teacherRoutes);
+app.use("/api/student", studentRoutes);
+app.use("/api/lecture", lectureRoutes);
+app.use("/api/course", courseRoutes);
 
 // Server Listening
 const PORT = process.env.PORT || 5000;

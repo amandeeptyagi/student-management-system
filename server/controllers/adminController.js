@@ -3,18 +3,19 @@ import Admin from "../models/AdminModel.js"
 import Teacher from "../models/TeacherModel.js";
 import Student from "../models/StudentModel.js";
 import Course from "../models/CourseModel.js";
+import generateToken from "../utils/generateToken.js";
 
 // Register Admin
 export const registerAdmin = async (req, res) => {
   try {
     const { name, email, mobile, password, instituteName, address } = req.body;
 
-    const userExists = await Admin.findOne({ email });
-    if (userExists) {
+    const adminExists = await Admin.findOne({ email });
+    if (adminExists) {
       return res.status(400).json({ message: "Admin already exists" });
     }
 
-    const user = new Admin({
+    const admin = new Admin({
       name,
       email,
       mobile,
@@ -24,22 +25,23 @@ export const registerAdmin = async (req, res) => {
       role: "admin",
     });
 
-    const saved = await user.save();
-    generateToken(res, saved._id, saved.role, null);
+    const saved = await admin.save();
+    // generateToken(res, saved._id, saved.role, null);
 
     res.status(201).json({ _id: saved._id, name: saved.name, email: saved.email, mobile: saved.mobile, instituteName: saved.instituteName, address: saved.address, role: saved.role });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Register Admin Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 // Get Admin Profile
 export const getAdminProfile = async (req, res) => {
   try {
-    const user = await Admin.findById(req.user.id).select("-password");
+    const admin = await Admin.findById(req.user.id).select("-password");
 
-    if (user) {
-      res.json(user);
+    if (admin) {
+      res.json(admin);
     } else {
       res.status(404).json({ message: "Admin not found" });
     }
@@ -100,66 +102,111 @@ export const deleteAdminProfile = async (req, res) => {
     await Admin.findByIdAndDelete(req.user._id);
     res.status(200).json({ message: "Admin profile deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete account" });
-  }
+  console.error("Delete Admin Error:", error);
+  res.status(500).json({ message: "Server error, Failed to delete account", error: error.message });
+}
 }
 
-//  Add a New Student
+// //  Add a New Student
 export const addStudent = async (req, res) => {
   try {
-    const { rollNo, name, email, courseId, department, address, password } = req.body;
+    const { rollNo, name, email, mobile, password, courseId, semester, branch, address } = req.body;
 
-    const studentExists = await Student.findOne({ email });
-    if (studentExists) {
-      return res.status(400).json({ message: "Student already exists" });
-    }
+    const course = await Course.findOne({ _id: courseId, admin: req.user._id });
+    if (!course) return res.status(404).json({ message: "Course not found or not authorized" });
 
-    const student = new Student({ rollNo, name, email, course: courseId, department, address, password, role: "student" });
+    // const hashedPassword = await bcrypt.hash(password, 10);
 
-    await student.save();
-    await Course.findByIdAndUpdate(courseId, { $push: { students: student._id } });
-    res.status(201).json({ message: "Student added successfully", student });
+    const student = new Student({
+      rollNo,
+      name,
+      email,
+      mobile,
+      password: password,
+      course: courseId,
+      semester,
+      branch,
+      address,
+      role: "student",
+      admin: req.user._id,
+    });
+
+    const saved = await student.save();
+    res.status(201).json({ message: "Student added successfully", saved });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Failed to add student", error });
   }
 };
 
 //  Get All Students (Grouped by Course)
-export const getStudents = async (req, res) => {
+export const getAllStudents = async (req, res) => {
   try {
-    const students = await Course.find().populate({
-      path: "subjects",
-      select: "name"
-    }).populate({
-      path: "students",
-      select: "rollNo name email"
-    });
+    const adminId = req.user._id;
 
-    res.json(students);
+    // Get all courses of this admin
+    const courses = await Course.find({ admin: adminId });
+
+    const result = [];
+
+    for (const course of courses) {
+      const courseData = {
+        courseId: course._id,
+        courseName: course.name,
+        semesters: [],
+      };
+
+      for (let sem = 1; sem <= course.semesters.length; sem++) {
+        const students = await Student.find({
+          course: course._id,
+          semester: sem,
+        }).select("-password"); // Exclude password
+
+        if (students.length > 0) {
+          courseData.semesters.push({
+            semesterNumber: sem,
+            students,
+          });
+        }
+      }
+
+      result.push(courseData);
+    }
+
+    res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch students", error });
   }
 };
 
 //  Edit Student
 export const updateStudent = async (req, res) => {
   try {
-    const { rollNo, name, email, courseId } = req.body;
-    const { id } = req.params;
+        const { rollNo, name, email, mobile, password, courseId, semester, branch, address } = req.body;
+    const student = await Student.findById(req.params.id);
 
-    const student = await Student.findById(id);
-    if (!student) return res.status(404).json({ message: "Student not found" });
+    if (!student || student.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized or student not found" });
+    }
 
-    student.rollNo = rollNo || student.rollNo;
-    student.name = name || student.name;
-    student.email = email || student.email;
-    student.course = courseId || student.course;
-    // student.password = password || student.password;
+    if (rollNo) student.rollNo = rollNo;
+    if (name) student.name = name;
+    if (email) student.email = email;
+    if (mobile) student.mobile = mobile;
+    if (password) student.password = password;
+    if (courseId) student.course = courseId;
+    if (semester) {
+      student.semester = semester;
+      student.year = Math.ceil(semester / 2);
+    }
+    if (branch) student.branch = branch;
+    if (address) student.address = address;
 
-    await student.save();
-    res.json({ message: "Student updated successfully", student });
+    const updated = await student.save();
+    res.status(200).json({ message: "Student updated", updated });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.log(error);
+    res.status(500).json({ message: "Failed to update student", error });
   }
 };
 
@@ -168,13 +215,15 @@ export const deleteStudent = async (req, res) => {
   try {
     const { id } = req.params;
     const student = await Student.findById(id);
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+
+    if (!student || student.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized or student not found" });
     }
 
     // Remove student from course's students array
-    await Course.findByIdAndUpdate(student.course, { $pull: { students: id } });
-    await Student.findByIdAndDelete(id);
+    //await Course.findByIdAndUpdate(student.course, { $pull: { students: id } });
+    //await Student.findByIdAndDelete(id);
+    await student.deleteOne();
 
     res.status(200).json({ message: "Student deleted successfully" });
   } catch (error) {
@@ -185,61 +234,130 @@ export const deleteStudent = async (req, res) => {
 //  Add a New Teacher
 export const addTeacher = async (req, res) => {
   try {
-    const { name, email, specialization, password } = req.body;
+    const { name, email, mobile, specialization, department, address, password } = req.body;
 
+    // Check if teacher already exists
     const teacherExists = await Teacher.findOne({ email });
     if (teacherExists) {
       return res.status(400).json({ message: "Teacher already exists" });
     }
 
+    // Hash password
+    // const salt = await bcrypt.genSalt(10);
+    // const hashedPassword = await bcrypt.hash(password, salt);
 
-    const teacher = new Teacher({ name, email, specialization, password, role: "teacher" });
-    await teacher.save();
+    // Create teacher linked with admin
+    const teacher = new Teacher({
+      name,
+      email,
+      mobile,
+      specialization,
+      department,
+      address,
+      password: password,
+      role: "teacher",
+      admin: req.user._id  // current logged-in admin ID
+    });
 
-    res.status(201).json({ message: "Teacher added successfully", teacher });
+    const saved = await teacher.save();
+
+    res.status(201).json({
+      _id: saved._id,
+      name: saved.name,
+      email: saved.email,
+      mobile: saved.mobile,
+      specialization: saved.specialization,
+      department: saved.department,
+      address: saved.address,
+      admin: saved.admin,
+      role: saved.role,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error creating teacher:", error);
+    res.status(500).json({ message: "Server error while creating teacher" });
   }
 };
 
 //  Get All Teachers
 export const getTeachers = async (req, res) => {
   try {
-    const teachers = await Teacher.find();
-    res.json(teachers);
+    const teachers = await Teacher.find({ admin: req.user._id }).select("-password");
+    res.status(200).json(teachers);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error fetching teachers:", error);
+    res.status(500).json({ message: "Server error while fetching teachers" });
   }
 };
 
 //  Edit Teacher
 export const updateTeacher = async (req, res) => {
   try {
-    const { name, email, specialization } = req.body;
-    const { id } = req.params;
+    const teacher = await Teacher.findById(req.params.id);
 
-    const teacher = await Teacher.findById(id);
-    if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    if (teacher.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied. Not your teacher." });
+    }
+
+    const { name, email, mobile, specialization, department, address, password } = req.body;
 
     teacher.name = name || teacher.name;
     teacher.email = email || teacher.email;
+    teacher.mobile = mobile || teacher.mobile;
     teacher.specialization = specialization || teacher.specialization;
+    teacher.department = department || teacher.department;
+    teacher.address = address || teacher.address;
+    teacher.password = password || teacher.password;
 
-    await teacher.save();
-    res.json({ message: "Teacher updated successfully", teacher });
+    // if (password) {
+    //   const salt = await bcrypt.genSalt(10);
+    //   teacher.password = await bcrypt.hash(password, salt);
+    // }
+
+    const updatedTeacher = await teacher.save();
+
+    res.status(200).json({
+      message: "Teacher updated successfully",
+      teacher: {
+        _id: updatedTeacher._id,
+        name: updatedTeacher.name,
+        email: updatedTeacher.email,
+        mobile: updatedTeacher.mobile,
+        specialization: updatedTeacher.specialization,
+        department: updatedTeacher.department,
+        address: updatedTeacher.address,
+        role: updatedTeacher.role,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error updating teacher:", error);
+    res.status(500).json({ message: "Server error while updating teacher" });
   }
 };
 
 // Delete Teacher
 export const deleteTeacher = async (req, res) => {
   try {
-    const { id } = req.params;
-    await Teacher.findByIdAndDelete(id);
-    res.json({ message: "Teacher deleted successfully" });
+    const teacher = await Teacher.findById(req.params.id);
+
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    if (teacher.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied. Not your teacher." });
+    }
+
+    await teacher.deleteOne();
+
+    res.status(200).json({ message: "Teacher deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error deleting teacher:", error);
+    res.status(500).json({ message: "Server error while deleting teacher" });
   }
 };
+
 
