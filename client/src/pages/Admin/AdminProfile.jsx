@@ -30,7 +30,7 @@ const StudentProfile = () => {
   });
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/admins/profile', { withCredentials: true })
+    axios.get('http://localhost:5000/api/admin/profile', { withCredentials: true })
       .then(response => {
         setProfileData({ name: response.data.name, email: response.data.email });
       })
@@ -39,7 +39,7 @@ const StudentProfile = () => {
 
   const handleEdit = () => {
     if (isEditing) {
-      axios.put('http://localhost:5000/api/admins/profile/update', profileData, { withCredentials:true })
+      axios.put('http://localhost:5000/api/admin/profile/update', profileData, { withCredentials:true })
         .then(response => {
           setProfileData(response.data);
           alert('Profile updated successfully!');
@@ -64,7 +64,7 @@ const StudentProfile = () => {
       alert('New passwords do not match!');
       return;
     }
-    axios.put('http://localhost:5000/api/admins/change-password', {
+    axios.put('http://localhost:5000/api/admin/profile/change-password', {
       oldPassword: passwordData.oldPassword,
       newPassword: passwordData.newPassword
     }, { withCredentials:true })

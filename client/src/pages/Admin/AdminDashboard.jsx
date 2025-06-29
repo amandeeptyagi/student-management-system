@@ -1,4 +1,5 @@
-import React from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Users, 
@@ -9,7 +10,8 @@ import {
   Calendar, 
   FileText, 
   BarChart2, 
-  Settings 
+  Settings, 
+  User
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -59,6 +61,18 @@ const AdminDashboard = () => {
     { id: 5, title: 'Parent Committee Meeting', time: '6:00 PM - 7:30 PM', date: 'Thursday, April 3' }
   ];
 
+
+  const [username, setUsername] = useState({ name: '' });
+
+useEffect(() => {
+  axios.get('http://localhost:5000/api/admin/profile', { withCredentials: true })
+    .then(response => {
+      setUsername({ name: response.data.name });
+    })
+    .catch(error => console.error('Error fetching username:', error));
+}, []);
+
+
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
@@ -66,7 +80,7 @@ const AdminDashboard = () => {
           Admin Dashboard
         </h1>
         <div className="text-sm text-gray-500">
-          Welcome back, Administrator
+          Welcome back, {username.name}
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import bgImage from '@/assets/background.png';
 
 const HomePage = () => {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -53,7 +54,7 @@ const HomePage = () => {
       <div 
         className="relative flex items-center justify-center min-h-[500px] p-8 bg-gray-200 bg-opacity-90"
         style={{
-          backgroundImage: "url('/background.png')",
+          backgroundImage: `url(${bgImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}

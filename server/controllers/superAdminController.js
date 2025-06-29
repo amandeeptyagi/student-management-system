@@ -254,7 +254,7 @@ export const registerSuperAdmin = async (req, res) => {
     const saved = await newSuperAdmin.save();
 
     // Optionally generate a token
-    generateToken(res, saved._id, saved.role, null);
+    // generateToken(res, saved._id, saved.role, null);
 
     res.status(201).json({
       _id: saved._id,

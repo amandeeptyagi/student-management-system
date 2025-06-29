@@ -25,7 +25,7 @@ const AdminTeachers = () => {
 
   const fetchTeachers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admins/teachers', { withCredentials: true });
+      const res = await axios.get('http://localhost:5000/api/admin/teachers', { withCredentials: true });
       setTeachers(res.data);
     } catch (error) {
       console.error('Error fetching teachers:', error);
@@ -35,9 +35,9 @@ const AdminTeachers = () => {
   const handleAddOrEditTeacher = async () => {
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:5000/api/admins/teacher/${currentTeacher._id}`, currentTeacher, { withCredentials: true });
+        await axios.put(`http://localhost:5000/api/admin/teacher/${currentTeacher._id}`, currentTeacher, { withCredentials: true });
       } else {
-        await axios.post('http://localhost:5000/api/admins/teacher/add', currentTeacher, { withCredentials: true });
+        await axios.post('http://localhost:5000/api/admin/teacher/add', currentTeacher, { withCredentials: true });
       }
       alert('Successfully saved!');
       setCurrentTeacher({});
@@ -51,7 +51,7 @@ const AdminTeachers = () => {
 
   const handleDeleteTeacher = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/admins/teacher/${id}`, { withCredentials: true });
+      await axios.delete(`http://localhost:5000/api/admin/teacher/${id}`, { withCredentials: true });
       alert('Successfully deleted!');
       fetchTeachers();
     } catch (error) {

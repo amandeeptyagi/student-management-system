@@ -20,7 +20,7 @@ const CourseManagement = () => {
 
   const fetchCourses = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/courses', { withCredentials: true });
+      const res = await axios.get('http://localhost:5000/api/course', { withCredentials: true });
       setCourses(res.data);
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -29,7 +29,7 @@ const CourseManagement = () => {
 
   const handleAddCourse = async () => {
     try {
-      await axios.post('http://localhost:5000/api/courses/add', { name: newCourse }, { withCredentials: true });
+      await axios.post('http://localhost:5000/api/course/add', { name: newCourse }, { withCredentials: true });
       setNewCourse('');
       setIsCourseDialogOpen(false); // Close the dialog after successful course addition
       fetchCourses();
@@ -42,7 +42,7 @@ const CourseManagement = () => {
 
   const handleDeleteCourse = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/courses/${id}`, { withCredentials: true });
+      await axios.delete(`http://localhost:5000/api/course/${id}`, { withCredentials: true });
       fetchCourses();
       alert('Successfully deleted course');
     } catch (error) {
@@ -119,7 +119,7 @@ const CourseSubjects = ({ course, onBack }) => {
 
   const fetchSubjects = async () => {
     try {
-      setSubjects(course.subjects || []);
+      setSubjects(course.semesters || []);
     } catch (error) {
       console.error('Error fetching subjects:', error);
     }
@@ -127,7 +127,7 @@ const CourseSubjects = ({ course, onBack }) => {
 
   const handleAddSubject = async () => {
     try {
-      await axios.post('http://localhost:5000/api/courses/subject/add', { courseId: course._id, subjectName: newSubjectName }, { withCredentials: true });
+      await axios.post('http://localhost:5000/api/course/subject/add', { courseId: course._id, subjectName: newSubjectName }, { withCredentials: true });
       setNewSubjectName('');
       setIsSubjectDialogOpen(false); // Close the dialog after adding the subject
       fetchSubjects();
@@ -141,7 +141,7 @@ const CourseSubjects = ({ course, onBack }) => {
 
   const handleDeleteSubject = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/courses/subject/${id}`, { withCredentials: true });
+      await axios.delete(`http://localhost:5000/api/course/subject/${id}`, { withCredentials: true });
       fetchSubjects();
       alert('Successfully deleted subject');
     } catch (error) {
@@ -152,10 +152,10 @@ const CourseSubjects = ({ course, onBack }) => {
   return (
     <div>
       <Button variant="outline" onClick={onBack}>← Back to Courses</Button>
-      <h1 className="text-3xl font-bold text-gray-800">Subjects in {course.name}</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mt-5">Semesters in {course.name}</h1>
       <Dialog open={isSubjectDialogOpen} onOpenChange={setIsSubjectDialogOpen}>
   <DialogTrigger asChild>
-    <Button className="bg-blue-600 hover:bg-blue-700"><Plus className="h-4 w-4 mr-2" /> Add Subject</Button>
+    <Button className="bg-blue-600 hover:bg-blue-700 mt-5 mb-5"><Plus className="h-4 w-4 mr-2" /> Add Subject</Button>
   </DialogTrigger>
   <DialogContent>
     <DialogHeader>
@@ -178,7 +178,7 @@ const CourseSubjects = ({ course, onBack }) => {
             <CardHeader className="flex justify-between items-center">
               <div className="flex items-center space-x-3">
                 <Book className="h-10 w-10 text-blue-500" />
-                <h3 className="text-lg font-semibold">{subject.name}</h3>
+                <h3 className="text-lg font-semibold">{subject.number}</h3>
               </div>
               <Button variant="destructive" size="sm" onClick={() => handleDeleteSubject(subject._id)}>
                 <Trash2 className="h-4 w-4" />

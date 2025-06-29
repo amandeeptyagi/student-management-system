@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { login } from "../lib/api"; // API function import kiya
+import { login } from "@/lib/api"; // API function import kiya
 
 const LoginComponent = () => {
   const [loginType, setLoginType] = useState("student");

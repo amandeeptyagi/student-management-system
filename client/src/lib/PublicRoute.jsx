@@ -5,6 +5,7 @@ const PublicRoute = () => {
 
   if (user) {
     // ✅ Redirect based on user role
+    if (user.role === "superadmin") return <Navigate to="/superadmin/dashboard" />;
     if (user.role === "admin") return <Navigate to="/admin/dashboard" />;
     if (user.role === "teacher") return <Navigate to="/teacher/dashboard" />;
     if (user.role === "student") return <Navigate to="/student/dashboard" />;
