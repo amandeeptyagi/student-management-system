@@ -4,7 +4,7 @@ import bgImage from '@/assets/background.png';
 
 const HomePage = () => {
   const [activeSlide, setActiveSlide] = useState(0);
-  
+
   // Slide data for carousel
   const slides = [
     {
@@ -23,7 +23,7 @@ const HomePage = () => {
       icon: "🗓️"
     }
   ];
-  
+
   // Key highlights data
   const highlights = [
     { title: "Easy Enrollment", description: "Streamlined admission process with digital documentation", icon: "✅" },
@@ -31,19 +31,19 @@ const HomePage = () => {
     { title: "Communication Tools", description: "Direct messaging between students, parents, and faculty", icon: "💬" },
     { title: "Resource Library", description: "Access to educational materials and resources", icon: "📚" }
   ];
-  
+
   // Student feedback data
   const feedback = [
     { name: "Alex Johnson", role: "Computer Science Student", comment: "This platform has transformed how I track my assignments and grades. The interface is intuitive and user-friendly.", avatar: "A" },
     { name: "Maria Garcia", role: "Engineering Student", comment: "I love how easy it is to communicate with professors and submit assignments through the portal.", avatar: "M" },
     { name: "David Chen", role: "Business Major", comment: "The calendar integration and event notifications have helped me stay organized throughout the semester.", avatar: "D" }
   ];
-  
+
   // Handle carousel navigation
   const nextSlide = () => {
     setActiveSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
-  
+
   const prevSlide = () => {
     setActiveSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
@@ -51,7 +51,7 @@ const HomePage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Hero Section */}
-      <div 
+      <div
         className="relative flex items-center justify-center min-h-[500px] p-8 bg-gray-200 bg-opacity-90"
         style={{
           backgroundImage: `url(${bgImage})`,
@@ -60,18 +60,28 @@ const HomePage = () => {
         }}
       >
         <div className="max-w-4xl mx-auto text-center z-10">
-          <h1 className="text-5xl font-bold text-blue-800 mb-6">
+          <h1 className="text-5xl font-bold text-blue-800 mb-6 mt-50">
             Student Management System
           </h1>
           <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
-            Empowering educational institutions with comprehensive tools to manage students, 
+            Empowering educational institutions with comprehensive tools to manage students,
             track performance, and streamline academic processes.
           </p>
-          <Link to = "/login">
-          <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg transition duration-300 transform hover:scale-105">
-            Login
-          </button>
-          </Link>
+          <div className='flex-column w-50 m-auto'>
+            <Link to="/login">
+              <button className="w-50  mb-5 px-8 py-3 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg transition duration-300 transform hover:scale-105 cursor-pointer">
+                Login
+              </button>
+            </Link>
+            <Link to="/register-admin">
+              <button className="w-50 px-8 py-3 bg-red-200 hover:bg-red-400 text-black font-bold rounded-lg shadow-lg transition duration-300 transform hover:scale-105 cursor-pointer">
+                SignUp
+              </button>
+            </Link>
+          </div>
+          <p className="text-m text-red-700 mb-8 max-w-2xl mx-auto">
+            * Sign up facility is provided to you only for signing up as an admin
+          </p>
         </div>
       </div>
 
@@ -81,7 +91,7 @@ const HomePage = () => {
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
             Stay Informed
           </h2>
-          
+
           <div className="relative">
             <div className="overflow-hidden">
               <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
@@ -96,21 +106,21 @@ const HomePage = () => {
                 ))}
               </div>
             </div>
-            
-            <button 
+
+            <button
               onClick={prevSlide}
               className="absolute left-0 top-1/2 transform -translate-y-1/2 -ml-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"
             >
               ←
             </button>
-            
-            <button 
+
+            <button
               onClick={nextSlide}
               className="absolute right-0 top-1/2 transform -translate-y-1/2 -mr-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"
             >
               →
             </button>
-            
+
             <div className="flex justify-center mt-4">
               {slides.map((_, index) => (
                 <button
@@ -123,7 +133,7 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Key Highlights Grid */}
       <div className="py-12 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
@@ -133,7 +143,7 @@ const HomePage = () => {
           <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto">
             Our platform offers powerful features designed to enhance educational management
           </p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {highlights.map((highlight, index) => (
               <div key={index} className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition duration-300">
@@ -145,7 +155,7 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Student Feedback Section */}
       <div className="py-12 bg-blue-50">
         <div className="max-w-6xl mx-auto px-4">
@@ -155,7 +165,7 @@ const HomePage = () => {
           <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto">
             Hear from students who have experienced the benefits of our platform
           </p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {feedback.map((item, index) => (
               <div key={index} className="bg-white rounded-lg p-6 shadow-md">
@@ -174,7 +184,7 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8">
         <div className="max-w-6xl mx-auto px-4 text-center">

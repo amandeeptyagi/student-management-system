@@ -20,11 +20,11 @@ const Navbar = () => {
             {/* System Name */}
             <div
                 onClick={() => handleNavigation("/")}
-                className="flex-shrink-0 cursor-pointer"
+                className="flex-shrink-0 cursor-pointer text-xl font-bold text-blue-700 hover:text-blue-800 transition-colors"
             >
-                <div className="text-xl font-bold text-blue-700 hover:text-blue-800 transition-colors">
-                    Student Management System
-                </div>
+
+                Student Management System
+
             </div>
 
             {/* User Info & Authentication */}
@@ -57,16 +57,25 @@ const Navbar = () => {
                 ) : (
                     <div className="flex space-x-3">
                         <Button
-                            variant="outline"
+                            // variant="outline"
                             size="sm"
+                            className="w-20 bg-white hover:bg-gray-200 text-black cursor-pointer"
+                            onClick={() => handleNavigation("/")}
+                        >
+                            Home
+                        </Button>
+                        <Button
+                            // variant="outline"
+                            size="sm"
+                            className="w-20 bg-blue-500 hover:bg-blue-700 text-white cursor-pointer"
                             onClick={() => handleNavigation("/login")}
                         >
                             Login
                         </Button>
                         <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700"
-                            onClick={() => handleNavigation("/signup")}
+                            className="w-20 bg-red-200 hover:bg-red-400 text-black cursor-pointer"
+                            onClick={() => handleNavigation("/register-admin")}
                         >
                             Sign Up
                         </Button>

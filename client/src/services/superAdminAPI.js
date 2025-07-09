@@ -33,6 +33,3 @@ export const toggleLoginAccess = () =>
 export const getSystemConfig = () =>
   API.get("/superadmin/config");
 
-// ============ One-time Super Admin Registration (optional) ============
-export const registerSuperAdmin = (data) =>
-  API.post("/superadmin/register", data);

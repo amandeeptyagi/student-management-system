@@ -38,6 +38,13 @@ export const createLecture = async (req, res) => {
     const lecture = new Lecture({ teacher, course, semester, subject, day, timeSlot, admin });
     await lecture.save();
 
+    // ✅ Update Subject with teacher info (if not already assigned)
+    const subjectDoc = await Subject.findById(subject);
+    if (!subjectDoc.teacher) {
+      subjectDoc.teacher = teacher;
+      await subjectDoc.save();
+    }
+
     res.status(201).json({ message: "Lecture assigned successfully", lecture });
   } catch (error) {
     res.status(500).json({ message: "Failed to assign lecture", error });
@@ -82,6 +89,9 @@ export const updateLecture = async (req, res) => {
     const lecture = await Lecture.findOne({ _id: lectureId, admin: adminId });
     if (!lecture) return res.status(404).json({ message: "Lecture not found" });
 
+    const originalSubject = lecture.subject.toString();
+    const originalTeacher = lecture.teacher.toString();
+
     // Optional clash checks if fields are being updated:
     if ((teacher || day || timeSlot) && (teacher !== lecture.teacher.toString() || day !== lecture.day || timeSlot !== lecture.timeSlot)) {
       const teacherClash = await Lecture.findOne({
@@ -115,6 +125,22 @@ export const updateLecture = async (req, res) => {
     if (timeSlot) lecture.timeSlot = timeSlot;
 
     await lecture.save();
+
+    // ✅ Handle subject.teacher update
+
+    // 1. If subject changed, remove teacher from old subject if no other lecture uses it
+    if (subject && subject !== originalSubject) {
+      const otherLecture = await Lecture.findOne({ subject: originalSubject });
+      if (!otherLecture) {
+        await Subject.findByIdAndUpdate(originalSubject, { $unset: { teacher: "" } });
+      }
+    }
+
+    // 2. Assign teacher to new subject
+    const updatedSubject = await Subject.findById(lecture.subject);
+    updatedSubject.teacher = lecture.teacher;
+    await updatedSubject.save();
+
     res.status(200).json({ message: "Lecture updated successfully", lecture });
   } catch (error) {
     res.status(500).json({ message: "Failed to update lecture", error });
@@ -127,6 +153,13 @@ export const deleteLecture = async (req, res) => {
   try {
     const lecture = await Lecture.findOneAndDelete({ _id: req.params.id, admin: req.user._id });
     if (!lecture) return res.status(404).json({ message: "Lecture not found or unauthorized" });
+
+    // ✅ Check if subject has any other lectures
+    const otherLectures = await Lecture.findOne({ subject: lecture.subject });
+
+    if (!otherLectures) {
+      await Subject.findByIdAndUpdate(lecture.subject, { $unset: { teacher: "" } });
+    }
 
     res.status(200).json({ message: "Lecture deleted" });
   } catch (error) {

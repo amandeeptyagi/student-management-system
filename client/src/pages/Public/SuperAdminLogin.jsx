@@ -38,12 +38,12 @@ const SuperAdminLogin = () => {
     } catch (error) {
       console.error("Login error:", error);
       const message = error.response.data ||
-                error.response?.data?.message ||
-                error.message ||
-                'Login failed';
-                console.log("test");
-                toast.error(message.message); // 🔥 Show actual error
-            console.log(message.message);
+        error.response?.data?.message ||
+        error.message ||
+        'Login failed';
+      console.log("test");
+      toast.error(message.message); // 🔥 Show actual error
+      console.log(message.message);
     } finally {
       setLoading(false);
     }

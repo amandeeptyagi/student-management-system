@@ -1,238 +1,364 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { User, Mail, KeyRound, BookOpen, Lock } from 'lucide-react';
-import axios from 'axios';
+import { User, Mail, Phone, MapPin, Calendar, BookOpen, Lock, Eye, EyeOff, GraduationCap, Hash, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { getStudentProfile, updateStudentPassword, getFullStudentCourseDetails } from '@/services/studentAPI';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
 
 const StudentProfile = () => {
-  // const [isEditing, setIsEditing] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [student, setStudent] = useState(null);
+  const [courseDetails, setCourseDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
   const [passwordData, setPasswordData] = useState({
     oldPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
-  const [profileData, setProfileData] = useState({
-    name: '',
-    email: '',
-    rollNo: '',
-    course: ''
-  });
+
+  // Fetch student profile
+  const fetchStudentProfile = async () => {
+    try {
+      const response = await getStudentProfile();
+      setStudent(response.data.student);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast.error('Failed to fetch profile');
+    }
+  };
+
+  // Fetch course details
+  const fetchCourseDetails = async () => {
+    try {
+      const response = await getFullStudentCourseDetails();
+      setCourseDetails(response.data);
+    } catch (error) {
+      console.error('Error fetching course details:', error);
+      toast.error('Failed to fetch course details');
+    }
+  };
 
   useEffect(() => {
-    const fetchStudentProfile = async () => {
-      try {
-        const user = JSON.parse(localStorage.getItem("user")); // Get logged-in user
-        if (!user) {
-          alert("User not found. Please login again.");
-          return;
-        }
-        
-        const response = await axios.get(`http://localhost:5000/api/students/profile`, {
-          withCredentials: true, // ✅ Yeh ensure karega ki cookies backend tak pahunch sakein
-        });
-        setProfileData({
-          ...response.data,
-          courseName: response.data.course?.name || "N/A" // 👈 Ensure `course.name` is used
-        });
-      } catch (error) {
-        console.error("Failed to fetch student profile:", error);
-        alert("Error fetching profile data.");
-      }
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchStudentProfile(), fetchCourseDetails()]);
+      setLoading(false);
     };
-
-    fetchStudentProfile();
-
+    loadData();
   }, []);
 
-  // const handleEdit = () => {
-  //   setIsEditing(!isEditing);
-  // };
+  // Handle password change
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
 
-  // const handleInputChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setProfileData((prev) => ({
-  //     ...prev,
-  //     [name]: value
-  //   }));
-  // };
-
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleChangePassword = async () => {
-    if (
-      !passwordData.oldPassword ||
-      !passwordData.newPassword ||
-      !passwordData.confirmPassword
-    ) {
-      alert("Please fill in all fields.");
-      return;
-    }
-    
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New passwords do not match.");
+      toast.error('New passwords do not match');
       return;
     }
-  
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+
     try {
-      const response = await axios.put(
-        "http://localhost:5000/api/students/change-password",
-        {
-          oldPassword: passwordData.oldPassword,
-          newPassword: passwordData.newPassword,
-        },
-        { withCredentials: true }
-      );
-  
-      alert(response.data.message || "Password changed successfully!");
-      setIsChangingPassword(false);
-      setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+      await updateStudentPassword({
+        oldPassword: passwordData.oldPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      toast.success('Password changed successfully');
+      setChangingPassword(false);
+      setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
-      console.error("Error changing password:", error);
-      alert(error.response?.data?.message || "Failed to change password.");
+      console.error('Error changing password:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to change password';
+      toast.error(errorMessage);
     }
   };
-  
 
-  const profileFields = [
-    { icon: <User className="mr-2 h-5 w-5 text-blue-500" />, label: 'Name', name: 'name' },
-    { icon: <Mail className="mr-2 h-5 w-5 text-green-500" />, label: 'Email', name: 'email' },
-    { icon: <KeyRound className="mr-2 h-5 w-5 text-purple-500" />, label: 'Roll Number', name: 'rollNo' },
-    { icon: <BookOpen className="mr-2 h-5 w-5 text-orange-500" />, label: 'Course', name: 'courseName' }
-  ];
+  const handlePasswordInputChange = (e) => {
+    setPasswordData({
+      ...passwordData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+        <span className="text-lg text-gray-600">Loading profile...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Student Profile</h1>
-        <div className="flex space-x-4">
-          {/* <Button 
-            onClick={handleEdit}
-            className={isEditing ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}
-          >
-            {isEditing ? 'Save Profile' : 'Edit Profile'}
-          </Button> */}
-          <Button 
-            onClick={() => setIsChangingPassword(true)}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            Change Password
-          </Button>
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="w-8 h-8 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{student?.name}</h1>
+              <p className="text-gray-600">Roll No: {student?.rollNo}</p>
+              <p className="text-sm text-gray-500">
+                Joined: {student?.createdAt ? new Date(student.createdAt).toLocaleDateString('en-GB') : 'N/A'}
+              </p>
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setChangingPassword(!changingPassword)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Change Password
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Profile Information Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <User className="mr-3 h-6 w-6" />
-            Personal Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {profileFields.map((field) => (
-              <div key={field.name} className="grid grid-cols-4 items-center gap-4">
-                <div className="flex items-center col-span-1">
-                  {field.icon}
-                  <Label htmlFor={field.name} className="text-right">
-                    {field.label}
-                  </Label>
-                </div>
-                {/* {0 ? (
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    value={profileData[field.name]}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                  />
-                ) : ( */}
-                  <div className="col-span-3 text-gray-700">
-                    {profileData[field.name]}
-                  </div>
-                {/* )} */}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Personal Information */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Personal Information</h2>
 
-      {/* Change Password Card */}
-      {isChangingPassword && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Lock className="mr-3 h-6 w-6" />
-              Change Password
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="oldPassword" className="text-right col-span-1">
-                  Old Password
-                </Label>
-                <Input
-                  id="oldPassword"
-                  name="oldPassword"
-                  type="password"
-                  value={passwordData.oldPassword}
-                  onChange={handlePasswordChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="newPassword" className="text-right col-span-1">
-                  New Password
-                </Label>
-                <Input
-                  id="newPassword"
-                  name="newPassword"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={handlePasswordChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="confirmPassword" className="text-right col-span-1">
-                  Confirm Password
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button 
-                  onClick={handleChangePassword}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Change Password
-                </Button>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex items-center space-x-3">
+            <User className="w-5 h-5 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Full Name</p>
+              <p className="font-medium">{student?.name || 'Not provided'}</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          <div className="flex items-center space-x-3">
+            <Hash className="w-5 h-5 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Roll Number</p>
+              <p className="font-medium">{student?.rollNo || 'Not provided'}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Mail className="w-5 h-5 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-medium">{student?.email || 'Not provided'}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Phone className="w-5 h-5 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Mobile</p>
+              <p className="font-medium">{student?.mobile || 'Not provided'}</p>
+            </div>
+          </div>
+          <div className="flex items-start space-x-3 md:col-span-2">
+            <MapPin className="w-5 h-5 text-gray-400 mt-1" />
+            <div>
+              <p className="text-sm text-gray-500">Address</p>
+              <p className="font-medium">{student?.address || 'Not provided'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Academic Information */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Academic Information</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex items-center space-x-3">
+            <GraduationCap className="w-5 h-5 text-blue-500" />
+            <div>
+              <p className="text-sm text-gray-500">Branch</p>
+              <p className="font-medium">{student?.branch || 'Not provided'}</p>
+            </div>
+          </div>
+          {/* Course Details */}
+          {courseDetails && (
+            <>
+              <div className="flex items-center space-x-3">
+                <BookOpen className="w-5 h-5 text-indigo-500" />
+                <div>
+                  <p className="text-sm text-gray-500">Course Name</p>
+                  <p className="font-medium">{courseDetails.courseName}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Calendar className="w-5 h-5 text-orange-500" />
+                <div>
+                  <p className="text-sm text-gray-500">Duration</p>
+                  <p className="font-medium">{courseDetails.duration} Years</p>
+                </div>
+              </div>
+            </>)
+          }
+          <div className="flex items-center space-x-3">
+            <Calendar className="w-5 h-5 text-green-500" />
+            <div>
+              <p className="text-sm text-gray-500">Current Year</p>
+              <p className="font-medium">Year {student?.year || 'N/A'}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <BookOpen className="w-5 h-5 text-purple-500" />
+            <div>
+              <p className="text-sm text-gray-500">Current Semester</p>
+              <p className="font-medium">Semester {student?.semester || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      {/* Account Information */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Account Information</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex items-center space-x-3">
+            <User className="w-5 h-5 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Role</p>
+              <p className="font-medium capitalize">{student?.role || 'Student'}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Calendar className="w-5 h-5 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">Last Updated</p>
+              <p className="font-medium">
+                {student?.updatedAt
+                  ? new Date(student.updatedAt).toLocaleDateString('en-GB')
+                  : 'Not available'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Change Password Modal */}
+      <Dialog open={changingPassword} onOpenChange={setChangingPassword}>
+        <DialogContent className="max-w-md w-full">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+          </DialogHeader>
+
+          <Card className="shadow-none border-none">
+            <CardContent className="space-y-4 px-0">
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+
+                {/* Old Password */}
+                <div className="space-y-1">
+                  <Label htmlFor="oldPassword">Current Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="oldPassword"
+                      name="oldPassword"
+                      type={showOldPassword ? "text" : "password"}
+                      value={passwordData.oldPassword}
+                      onChange={handlePasswordInputChange}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                      className="absolute inset-y-0 right-3 flex items-center"
+                    >
+                      {showOldPassword ? (
+                        <EyeOff className="w-5 h-5 text-gray-400" />
+                      ) : (
+                        <Eye className="w-5 h-5 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* New Password */}
+                <div className="space-y-1">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      name="newPassword"
+                      type={showNewPassword ? "text" : "password"}
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordInputChange}
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute inset-y-0 right-3 flex items-center"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="w-5 h-5 text-gray-400" />
+                      ) : (
+                        <Eye className="w-5 h-5 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-1">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordInputChange}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex-col gap-2 pt-2">
+                  <Button type="submit" className="w-full">
+                    Change Password
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full bg-gray-200 mt-2"
+                    onClick={() => {
+                      setChangingPassword(false);
+                      setPasswordData({
+                        oldPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

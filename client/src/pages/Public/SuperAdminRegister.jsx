@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { registerSuperAdmin } from '@/services/superAdminAPI'; // Make sure path is correct
+import { registerSuperAdmin } from '@/services/publicAPI'; // Make sure path is correct
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Toaster } from "react-hot-toast";
@@ -41,8 +41,8 @@ const SuperAdminRegister = () => {
                 error.response?.data?.message ||
                 error.message ||
                 'Registration failed';
-                console.log("test");
-                toast.error(message.message); // 🔥 Show actual error
+            console.log("test");
+            toast.error(message.message); // 🔥 Show actual error
             console.log(message.message);
         } finally {
             setLoading(false);
@@ -51,7 +51,7 @@ const SuperAdminRegister = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-           
+
             <Toaster position="top center" reverseOrder={false} />
             <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md space-y-4">
                 <h2 className="text-2xl font-semibold text-center text-blue-700">Register Super Admin</h2>
