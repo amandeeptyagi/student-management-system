@@ -1,186 +1,417 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Users, Calendar, Bell, Newspaper } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Calendar, 
+  Clock, 
+  BookOpen, 
+  Users, 
+  GraduationCap, 
+  User,
+  TrendingUp,
+  Bell,
+  ChevronRight,
+  RefreshCw,
+  Loader2
+} from 'lucide-react';
+import { getTeacherProfile, getTeacherTimetable } from '@/services/teacherAPI';
+import { toast } from 'react-hot-toast';
 
 const TeacherDashboard = () => {
-  // Stats for the top cards
-  const stats = [
-    { 
-      icon: <FileText className="h-8 w-8 text-blue-500" />, 
-      title: 'Pending Assignments', 
-      value: '12' 
-    },
-    { 
-      icon: <Users className="h-8 w-8 text-green-500" />, 
-      title: 'Total Students', 
-      value: '120' 
-    },
-    { 
-      icon: <Calendar className="h-8 w-8 text-purple-500" />, 
-      title: 'Upcoming Classes', 
-      value: '5' 
+  const [teacher, setTeacher] = useState(null);
+  const [lectures, setLectures] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const dayNames = {
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday'
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [profileResponse, timetableResponse] = await Promise.all([
+        getTeacherProfile(),
+        getTeacherTimetable()
+      ]);
+      
+      setTeacher(profileResponse.data.teacher);
+      setLectures(timetableResponse.data.lectures);
+    } catch (error) {
+      toast.error('Failed to fetch dashboard data');
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // Sample data for the detailed section cards
-  const eventsData = [
-    { id: 1, title: 'Parent-Teacher Meeting', date: 'April 5, 2025', description: 'Annual meeting with parents to discuss student progress and curriculum.' },
-    { id: 2, title: 'Science Fair', date: 'April 12, 2025', description: 'Students will present their science projects to judges and parents.' },
-    { id: 3, title: 'End of Term Exam', date: 'May 20, 2025', description: 'Final examination for the spring semester.' }
-  ];
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchDashboardData();
+      toast.success('Dashboard refreshed successfully');
+    } catch (error) {
+      toast.error('Failed to refresh dashboard');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
-  const newsData = [
-    { id: 1, title: 'New Technology Lab Opening', date: 'March 31, 2025', description: 'The school is opening a new technology lab with advanced computers and equipment.' },
-    { id: 2, title: 'School Wins District Award', date: 'March 25, 2025', description: 'Our school has been recognized for excellence in education by the district board.' }
-  ];
+  const getCurrentDay = () => {
+    const today = new Date();
+    const dayIndex = today.getDay();
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return days[dayIndex];
+  };
 
-  const noticesData = [
-    { id: 1, title: 'Curriculum Update', date: 'March 30, 2025', description: 'New mathematics curriculum materials are available in the faculty resource center.' },
-    { id: 2, title: 'Staff Meeting', date: 'April 2, 2025', description: 'Mandatory staff meeting to discuss end-of-year procedures and planning.' },
-    { id: 3, title: 'Grade Submission Deadline', date: 'April 10, 2025', description: 'All mid-term grades must be submitted by 5:00 PM.' }
-  ];
+  const getTodayLectures = () => {
+    const today = getCurrentDay();
+    return lectures.filter(lecture => 
+      lecture.day.toLowerCase() === today.toLowerCase()
+    ).sort((a, b) => {
+      const timeA = a.timeSlot.split(' - ')[0];
+      const timeB = b.timeSlot.split(' - ')[0];
+      return timeA.localeCompare(timeB);
+    });
+  };
 
-  const calendarEvents = [
-    { id: 1, title: 'Math Class - Grade B', time: '9:00 AM - 10:30 AM', date: 'Monday, March 31' },
-    { id: 2, title: 'Science Lab - Grade A', time: '11:00 AM - 12:30 PM', date: 'Monday, March 31' },
-    { id: 3, title: 'English Literature - Grade C', time: '2:00 PM - 3:30 PM', date: 'Monday, March 31' },
-    { id: 4, title: 'History Class - Grade B', time: '9:00 AM - 10:30 AM', date: 'Tuesday, April 1' },
-    { id: 5, title: 'Staff Meeting', time: '4:00 PM - 5:00 PM', date: 'Wednesday, April 2' }
-  ];
+  const getUpcomingLectures = () => {
+  const today = getCurrentDay(); // e.g., 'monday'
+  const now = new Date();
+
+  // Filter today's lectures
+  const todayLectures = lectures.filter(
+    (lecture) => lecture.day.toLowerCase() === today.toLowerCase()
+  );
+
+  // Helper to convert timeSlot string to start time in 24hr Date
+  const parseTimeSlotStart = (timeSlot) => {
+    const [start] = timeSlot.split(" - ");
+    const [time, meridian] = start.split(" ");
+    let [hour, minute] = time.split(":").map(Number);
+
+    if (meridian.toLowerCase() === "pm" && hour !== 12) hour += 12;
+    if (meridian.toLowerCase() === "am" && hour === 12) hour = 0;
+
+    const date = new Date();
+    date.setHours(hour, minute, 0, 0);
+    return date;
+  };
+
+  // Filter lectures whose start time is after current time
+  const upcomingLectures = todayLectures.filter((lecture) => {
+    const startTime = parseTimeSlotStart(lecture.timeSlot);
+    return startTime > now;
+  });
+
+  // Sort them by start time
+  upcomingLectures.sort((a, b) => {
+    const aTime = parseTimeSlotStart(a.timeSlot);
+    const bTime = parseTimeSlotStart(b.timeSlot);
+    return aTime - bTime;
+  });
+
+  return upcomingLectures;
+};
+
+
+  const getWeeklyStats = () => {
+    const totalLectures = lectures.length;
+    const uniqueCourses = new Set(lectures.map(lecture => lecture.course?.name)).size;
+    const uniqueSubjects = new Set(lectures.map(lecture => lecture.subject?.name)).size;
+    
+    // Calculate lectures per day
+    const lecturesPerDay = {};
+    daysOfWeek.forEach(day => {
+      lecturesPerDay[day] = lectures.filter(lecture => 
+        lecture.day.toLowerCase() === day.toLowerCase()
+      ).length;
+    });
+    
+    const avgLecturesPerDay = totalLectures / daysOfWeek.length;
+    
+    return {
+      totalLectures,
+      uniqueCourses,
+      uniqueSubjects,
+      lecturesPerDay,
+      avgLecturesPerDay: Math.round(avgLecturesPerDay * 10) / 10
+    };
+  };
+
+  const getTimeSlotColor = (timeSlot) => {
+    const hour = parseInt(timeSlot.split(':')[0]);
+    if (hour < 10) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (hour < 12) return 'bg-green-100 text-green-800 border-green-200';
+    if (hour < 14) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (hour < 16) return 'bg-purple-100 text-purple-800 border-purple-200';
+    return 'bg-pink-100 text-pink-800 border-pink-200';
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+        <span className="text-lg text-gray-600">Loading dashboard...</span>
+      </div>
+    );
+  }
+
+  const todayLectures = getTodayLectures();
+  const upcomingLectures = getUpcomingLectures();
+  const weeklyStats = getWeeklyStats();
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Teacher Dashboard
-        </h1>
-        <div className="text-sm text-gray-500">
-          Welcome back, Professor Smith
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {teacher?.name || 'Teacher'}!
+              </h1>
+              <p className="mt-2 text-gray-600">
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="mt-4 sm:mt-0 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              {stat.icon}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Detailed Information Cards */}
-      <div className="space-y-6">
-        {/* Events Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-xl font-bold">
-              <div className="flex items-center">
-                <Calendar className="h-6 w-6 text-orange-500 mr-2" />
-                Events
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="bg-blue-100 p-3 rounded-lg">
+                <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
-            </CardTitle>
-            <button className="text-sm text-blue-600 hover:underline">View All</button>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
-              {eventsData.map(event => (
-                <div key={event.id} className="border-b pb-3 last:border-0">
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total Lectures</p>
+                <p className="text-2xl font-bold text-gray-900">{weeklyStats.totalLectures}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="bg-green-100 p-3 rounded-lg">
+                <Users className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Courses</p>
+                <p className="text-2xl font-bold text-gray-900">{weeklyStats.uniqueCourses}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="bg-purple-100 p-3 rounded-lg">
+                <GraduationCap className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Subjects</p>
+                <p className="text-2xl font-bold text-gray-900">{weeklyStats.uniqueSubjects}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="bg-orange-100 p-3 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Avg/Day</p>
+                <p className="text-2xl font-bold text-gray-900">{weeklyStats.avgLecturesPerDay}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Today's Schedule */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Today's Schedule
+                  <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                    {todayLectures.length} {todayLectures.length === 1 ? 'lecture' : 'lectures'}
+                  </span>
+                </h2>
+              </div>
+              
+              <div className="p-6">
+                {todayLectures.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No lectures today</h3>
+                    <p className="text-gray-600">Enjoy your free day!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {todayLectures.map((lecture) => (
+                      <div
+                        key={lecture._id}
+                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getTimeSlotColor(lecture.timeSlot)}`}>
+                            <Clock className="h-4 w-4 inline mr-1" />
+                            {lecture.timeSlot}
+                          </span>
+                          <span className="text-m font-bold text-gray-700">
+                            Semester: {lecture.semester} Year: {(lecture.semester+1)/2}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm font-bold text-gray-600">Course</p>
+                            <p className="text-gray-900">{lecture.course?.name || 'N/A'}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-bold text-gray-600">Subject</p>
+                            <p className="text-gray-900">
+                              {lecture.subject?.name || 'N/A'}
+                              {lecture.subject?.code && (
+                                <span className="ml-2 text-sm text-gray-500">
+                                  ({lecture.subject.code})
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Profile Card */}
+            {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  Profile
+                </h2>
+              </div>
+              
+              <div className="p-6">
+                <div className="text-center">
+                  <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                    <User className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900">{teacher?.name}</h3>
+                  <p className="text-sm text-gray-600">{teacher?.department}</p>
+                  <p className="text-sm text-gray-600 mt-1">{teacher?.specialization}</p>
+                </div>
+                
+                <div className="mt-6 space-y-2">
                   <div className="flex justify-between">
-                    <h3 className="font-semibold">{event.title}</h3>
-                    <span className="text-sm text-gray-500">{event.date}</span>
+                    <span className="text-sm text-gray-600">Email</span>
+                    <span className="text-sm text-gray-900">{teacher?.email}</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* News Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-xl font-bold">
-              <div className="flex items-center">
-                <Newspaper className="h-6 w-6 text-blue-500 mr-2" />
-                News
-              </div>
-            </CardTitle>
-            <button className="text-sm text-blue-600 hover:underline">View All</button>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
-              {newsData.map(item => (
-                <div key={item.id} className="border-b pb-3 last:border-0">
                   <div className="flex justify-between">
-                    <h3 className="font-semibold">{item.title}</h3>
-                    <span className="text-sm text-gray-500">{item.date}</span>
+                    <span className="text-sm text-gray-600">Mobile</span>
+                    <span className="text-sm text-gray-900">{teacher?.mobile}</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">{item.description}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Notices Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-xl font-bold">
-              <div className="flex items-center">
-                <Bell className="h-6 w-6 text-red-500 mr-2" />
-                Notices
               </div>
-            </CardTitle>
-            <button className="text-sm text-blue-600 hover:underline">View All</button>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
-              {noticesData.map(notice => (
-                <div key={notice.id} className="border-b pb-3 last:border-0">
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold">{notice.title}</h3>
-                    <span className="text-sm text-gray-500">{notice.date}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">{notice.description}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+            </div> */}
 
-        {/* Calendar Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-xl font-bold">
-              <div className="flex items-center">
-                <Calendar className="h-6 w-6 text-purple-500 mr-2" />
-                Calendar
+            {/* Upcoming Lectures */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Bell className="h-5 w-5 mr-2" />
+                  Upcoming Lectures
+                </h2>
               </div>
-            </CardTitle>
-            <button className="text-sm text-blue-600 hover:underline">Full Calendar</button>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-2">
-              {calendarEvents.map(event => (
-                <div key={event.id} className="flex border-l-4 border-purple-500 pl-3 py-2 bg-gray-50">
-                  <div className="w-32 flex-shrink-0">
-                    <div className="text-sm font-medium">{event.date}</div>
-                    <div className="text-xs text-gray-500">{event.time}</div>
+              
+              <div className="p-6">
+                {upcomingLectures.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No upcoming lectures</p>
+                ) : (
+                  <div className="space-y-3">
+                    {upcomingLectures.map((lecture) => (
+                      <div key={lecture._id} className="border-l-4 border-blue-500 pl-4 py-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {lecture.subject?.name}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              {lecture.timeSlot}
+                            </p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex-grow">
-                    <div className="text-sm font-medium">{event.title}</div>
-                  </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Weekly Overview */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">Weekly Overview</h2>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-3">
+                  {daysOfWeek.map((day) => (
+                    <div key={day} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 capitalize">{day}</span>
+                      <div className="flex items-center">
+                        <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
+                            style={{
+                              width: `${(weeklyStats.lecturesPerDay[day] / Math.max(...Object.values(weeklyStats.lecturesPerDay))) * 100}%`
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 w-6 text-right">
+                          {weeklyStats.lecturesPerDay[day]}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
