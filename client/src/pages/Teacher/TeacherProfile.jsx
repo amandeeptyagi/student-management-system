@@ -351,7 +351,7 @@ const TeacherProfile = () => {
                         <div className="ml-3">
                           <p className="text-sm text-gray-600">Member since</p>
                           <p className="text-sm font-medium text-gray-900">
-                            {new Date(teacher.createdAt).toLocaleDateString()}
+                            {new Date(teacher.createdAt).toLocaleDateString('en-GB')}
                           </p>
                         </div>
                       </div>
@@ -367,7 +367,7 @@ const TeacherProfile = () => {
                         <div className="ml-3">
                           <p className="text-sm text-gray-600">Last updated</p>
                           <p className="text-sm font-medium text-gray-900">
-                            {new Date(teacher.updatedAt).toLocaleDateString()}
+                            {new Date(teacher.updatedAt).toLocaleDateString('en-GB')}
                           </p>
                         </div>
                       </div>

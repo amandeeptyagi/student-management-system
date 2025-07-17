@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import Teacher from "./TeacherModel.js" // import related models
+import Student from "./StudentModel.js";
+import Course from "./CourseModel.js";
+import Subject from "./SubjectModel.js";
+import Lecture from "./LectureModel.js";
 
 const adminSchema = mongoose.Schema(
   {
@@ -13,6 +18,19 @@ const adminSchema = mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Pre-delete middleware to delete related data
+adminSchema.pre("findOneAndDelete", async function (next) {
+  const adminId = this.getQuery()._id;
+
+  await Teacher.deleteMany({ admin: adminId });
+  await Student.deleteMany({ admin: adminId });
+  await Course.deleteMany({ admin: adminId });
+  await Subject.deleteMany({ createdBy: adminId });
+  await Lecture.deleteMany({ admin: adminId });
+
+  next();
+});
 
 // // Hash password before saving user
 // userSchema.pre("save", async function (next) {

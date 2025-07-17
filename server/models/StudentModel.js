@@ -6,20 +6,24 @@ const studentSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   mobile: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
-  year: { type: Number },
-  semester: { type: Number, required: true },
-  branch: { type: String, required: true },
+  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", default: null},
+  year: { type: Number, default: null },
+  semester: { type: Number, default: null },
+  branch: { type: String, default: null },
   address: { type: String, required: true },
   role: { type: String, enum: ["student"], required: true },
   admin: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true }
 }, { timestamps: true });
 
 studentSchema.pre("save", function (next) {
-  // Automatically calculate year from semester
-  this.year = Math.ceil(this.semester / 2);
+  if (this.semester) {
+    this.year = Math.ceil(this.semester / 2);
+  } else {
+    this.year = null;
+  }
   next();
 });
+
 
 // // Hash password before saving user
 // studentSchema.pre("save", async function (next) {

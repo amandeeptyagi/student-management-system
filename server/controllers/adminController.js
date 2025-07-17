@@ -102,30 +102,34 @@ export const deleteAdminProfile = async (req, res) => {
     await Admin.findByIdAndDelete(req.user._id);
     res.status(200).json({ message: "Admin profile deleted successfully" });
   } catch (error) {
-  console.error("Delete Admin Error:", error);
-  res.status(500).json({ message: "Server error, Failed to delete account", error: error.message });
-}
+    console.error("Delete Admin Error:", error);
+    res.status(500).json({ message: "Server error, Failed to delete account", error: error.message });
+  }
 }
 
-// //  Add a New Student
+//  Add a New Student
 export const addStudent = async (req, res) => {
   try {
     const { rollNo, name, email, mobile, password, courseId, semester, branch, address } = req.body;
 
-    const course = await Course.findOne({ _id: courseId, admin: req.user._id });
-    if (!course) return res.status(404).json({ message: "Course not found or not authorized" });
+    let course = null;
 
-    // const hashedPassword = await bcrypt.hash(password, 10);
+    if (courseId) {
+      course = await Course.findOne({ _id: courseId, admin: req.user._id });
+      if (!course) {
+        return res.status(404).json({ message: "Course not found or not authorized" });
+      }
+    }
 
     const student = new Student({
       rollNo,
       name,
       email,
       mobile,
-      password: password,
-      course: courseId,
-      semester,
-      branch,
+      password,
+      course: course ? course._id : null,
+      semester: semester || null,
+      branch: branch || null,
       address,
       role: "student",
       admin: req.user._id,
@@ -138,51 +142,61 @@ export const addStudent = async (req, res) => {
   }
 };
 
+
 //  Get All Students (Grouped by Course)
+// export const getAllStudents = async (req, res) => {
+//   try {
+//     const adminId = req.user._id;
+
+//     // Get all courses of this admin
+//     const courses = await Course.find({ admin: adminId });
+
+//     const result = [];
+
+//     for (const course of courses) {
+//       const courseData = {
+//         courseId: course._id,
+//         courseName: course.name,
+//         semesters: [],
+//       };
+
+//       for (let sem = 1; sem <= course.semesters.length; sem++) {
+//         const students = await Student.find({
+//           course: course._id,
+//           semester: sem,
+//         }).select("-password"); // Exclude password
+
+//         if (students.length > 0) {
+//           courseData.semesters.push({
+//             semesterNumber: sem,
+//             students,
+//           });
+//         }
+//       }
+
+//       result.push(courseData);
+//     }
+
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Failed to fetch students", error });
+//   }
+// };
+
 export const getAllStudents = async (req, res) => {
   try {
-    const adminId = req.user._id;
-
-    // Get all courses of this admin
-    const courses = await Course.find({ admin: adminId });
-
-    const result = [];
-
-    for (const course of courses) {
-      const courseData = {
-        courseId: course._id,
-        courseName: course.name,
-        semesters: [],
-      };
-
-      for (let sem = 1; sem <= course.semesters.length; sem++) {
-        const students = await Student.find({
-          course: course._id,
-          semester: sem,
-        }).select("-password"); // Exclude password
-
-        if (students.length > 0) {
-          courseData.semesters.push({
-            semesterNumber: sem,
-            students,
-          });
-        }
-      }
-
-      result.push(courseData);
-    }
-
-    res.status(200).json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to fetch students", error });
+    const students = await Student.find({ admin: req.user._id }).populate("course");
+    res.status(200).json(students);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch students", error: err.message });
   }
 };
 
 //  Edit Student
 export const updateStudent = async (req, res) => {
   try {
-        const { rollNo, name, email, mobile, password, courseId, semester, branch, address } = req.body;
+    const { rollNo, name, email, mobile, password, courseId, semester, branch, address } = req.body;
     const student = await Student.findById(req.params.id);
 
     if (!student || student.admin.toString() !== req.user._id.toString()) {

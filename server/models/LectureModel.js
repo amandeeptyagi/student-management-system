@@ -10,4 +10,5 @@ const lectureSchema = new mongoose.Schema({
   admin: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true },
 }, { timestamps: true });
 
-export default mongoose.model("Lecture", lectureSchema);
+const Lecture = mongoose.model("Lecture", lectureSchema);
+export default Lecture;

@@ -93,7 +93,7 @@ const SuperAdminAdminsManage = () => {
       console.error("Error creating admin:", error);
       toast.error(
         error.response?.data?.message || "Failed to create admin"
-        
+
       );
     } finally {
       setIsLoading(false); // loader stop
@@ -105,7 +105,7 @@ const SuperAdminAdminsManage = () => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.mobile) {
       setIsLoading(false); // loader stop
-      
+
       toast.error('Please fill all required fields');
       return;
     }
@@ -126,8 +126,8 @@ const SuperAdminAdminsManage = () => {
       setIsLoading(false); // loader stop
       setShowEditModal(false);
     } finally {
-    setIsLoading(false); // loader stop
-  }
+      setIsLoading(false); // loader stop
+    }
   };
 
   const handleDeleteAdmin = async (id) => {
@@ -142,8 +142,8 @@ const SuperAdminAdminsManage = () => {
         toast.error("Delete failed");
         console.error('Error deleting admin:', error);
       } finally {
-    setDeletingAdminId(null);
-  }
+        setDeletingAdminId(null);
+      }
     }
   };
 
@@ -329,10 +329,10 @@ const SuperAdminAdminsManage = () => {
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           {deletingAdminId === admin._id ? (
-    <Loader2 className="h-4 w-4 animate-spin" />
-  ) : (
-    <Trash2 className="h-4 w-4" />
-  )}
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </td>
@@ -390,101 +390,101 @@ const SuperAdminAdminsManage = () => {
 
       {/* Edit Admin Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Edit Admin</DialogTitle>
-    </DialogHeader>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Admin</DialogTitle>
+          </DialogHeader>
 
-    <div className="space-y-4 py-2">
-      {["name", "email", "mobile", "password", "instituteName", "address"].map((field) => (
-        <div key={field}>
-          <label className="block text-sm font-medium capitalize mb-1">
-            {field === "mobile" ? "Phone" : field === "password" ? "New Password (optional)" : field}
-          </label>
-          <input
-            type={field === "password" ? "password" : "text"}
-            value={formData[field]}
-            onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required={field !== "password"} // password is optional on update
-          />
-        </div>
-      ))}
-    </div>
-
-    <DialogFooter className="pt-4">
-      <Button onClick={handleUpdateAdmin} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
-        {isLoading ? "Updating..." : (
-    <>
-      <Save className="mr-2 h-4 w-4" />
-      Update Admin
-    </>
-  )}
-      </Button>
-      <DialogClose asChild>
-        <Button variant="outline">Cancel</Button>
-      </DialogClose>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
-
-      {showProfileModal && selectedAdmin && (
-  <Dialog open={showProfileModal} onOpenChange={setShowProfileModal}>
-    <DialogContent className="max-w-md">
-      <DialogHeader>
-        <DialogTitle>Admin Profile</DialogTitle>
-      </DialogHeader>
-
-      <div className="flex justify-center mb-4">
-        <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
-          <span className="text-xl font-semibold text-blue-700">
-            {selectedAdmin.name[0]}
-          </span>
-        </div>
-      </div>
-
-      <div className="space-y-3 text-sm text-gray-600">
-        {[
-          { icon: <User />, label: "Name", value: selectedAdmin.name },
-          { icon: <Mail />, label: "Email", value: selectedAdmin.email },
-          { icon: <Phone />, label: "Phone", value: selectedAdmin.mobile },
-          { icon: <School2Icon />, label: "Institute", value: selectedAdmin.instituteName },
-          { icon: <HomeIcon />, label: "Address", value: selectedAdmin.address },
-          {
-            icon: <Calendar />,
-            label: "Created",
-            value: new Date(selectedAdmin.createdAt).toLocaleDateString("en-GB"),
-          },
-        ].map(({ icon, label, value }) => (
-          <div className="flex items-center gap-2" key={label}>
-            <div className="text-gray-400">{icon}</div>
-            <div>
-              <div className="text-xs text-gray-500">{label}</div>
-              <div className="font-medium text-black">{value}</div>
-            </div>
+          <div className="space-y-4 py-2">
+            {["name", "email", "mobile", "password", "instituteName", "address"].map((field) => (
+              <div key={field}>
+                <label className="block text-sm font-medium capitalize mb-1">
+                  {field === "mobile" ? "Phone" : field === "password" ? "New Password (optional)" : field}
+                </label>
+                <input
+                  type={field === "password" ? "password" : "text"}
+                  value={formData[field]}
+                  onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required={field !== "password"} // password is optional on update
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <DialogFooter className="pt-6">
-        <Button
-          onClick={() => {
-            setShowProfileModal(false);
-            openEditModal(selectedAdmin);
-          }}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Admin
-        </Button>
-        <DialogClose asChild>
-          <Button variant="outline">Close</Button>
-        </DialogClose>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-)}
+          <DialogFooter className="pt-4">
+            <Button onClick={handleUpdateAdmin} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
+              {isLoading ? "Updating..." : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Update Admin
+                </>
+              )}
+            </Button>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* admin profile  */}
+      {showProfileModal && selectedAdmin && (
+        <Dialog open={showProfileModal} onOpenChange={setShowProfileModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Admin Profile</DialogTitle>
+            </DialogHeader>
+
+            <div className="flex justify-center mb-4">
+              <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-xl font-semibold text-blue-700">
+                  {selectedAdmin.name[0]}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-sm text-gray-600">
+              {[
+                { icon: <User />, label: "Name", value: selectedAdmin.name },
+                { icon: <Mail />, label: "Email", value: selectedAdmin.email },
+                { icon: <Phone />, label: "Phone", value: selectedAdmin.mobile },
+                { icon: <School2Icon />, label: "Institute", value: selectedAdmin.instituteName },
+                { icon: <HomeIcon />, label: "Address", value: selectedAdmin.address },
+                {
+                  icon: <Calendar />,
+                  label: "Created",
+                  value: new Date(selectedAdmin.createdAt).toLocaleDateString("en-GB"),
+                },
+              ].map(({ icon, label, value }) => (
+                <div className="flex items-center gap-2" key={label}>
+                  <div className="text-gray-400">{icon}</div>
+                  <div>
+                    <div className="text-xs text-gray-500">{label}</div>
+                    <div className="font-medium text-black">{value}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <DialogFooter className="pt-6">
+              <Button
+                onClick={() => {
+                  setShowProfileModal(false);
+                  openEditModal(selectedAdmin);
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Admin
+              </Button>
+              <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

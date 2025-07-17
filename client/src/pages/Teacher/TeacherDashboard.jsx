@@ -179,7 +179,7 @@ const TeacherDashboard = () => {
                 Welcome back, {teacher?.name || 'Teacher'}!
               </h1>
               <p className="mt-2 text-gray-600">
-                {new Date().toLocaleDateString('en-US', { 
+                {new Date().toLocaleDateString('en-GB', { 
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 
