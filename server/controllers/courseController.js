@@ -20,6 +20,7 @@ export const createCourse = async (req, res) => {
     res.status(201).json(newCourse);
   } catch (error) {
     res.status(500).json({ message: "Failed to create course", error });
+    console.log(error);
   }
 };
 
