@@ -48,11 +48,12 @@ export const createLecture = async (req, res) => {
     res.status(201).json({ message: "Lecture assigned successfully", lecture });
   } catch (error) {
     res.status(500).json({ message: "Failed to assign lecture", error });
+    console.log(error);
   }
 };
 
 
-// Fetch all lectures for all courses
+// Fetch all lectures for course and semester
 export const getLecturesByCourseAndSemester = async (req, res) => {
   try {
     const { courseId, semesterNumber } = req.params;
@@ -69,6 +70,7 @@ export const getLecturesByCourseAndSemester = async (req, res) => {
       semester: Number(semesterNumber),
       admin: adminId,
     })
+      .populate("course", "name")
       .populate("teacher", "name email")
       .populate("subject", "name code")
       .sort({ day: 1, timeSlot: 1 });
@@ -76,6 +78,31 @@ export const getLecturesByCourseAndSemester = async (req, res) => {
     res.status(200).json({ lectures });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch lectures", error });
+  }
+};
+
+//fetch all lectures for teacher
+export const getLecturesByTeacher = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const adminId = req.user._id;
+
+    // Verify teacher belongs to this admin (optional)
+    const teacher = await Teacher.findOne({ _id: teacherId });
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    const lectures = await Lecture.find({ teacher: teacherId, admin: adminId })
+      .populate("course", "name")
+      .populate("teacher", "name email")
+      .populate("subject", "name code")
+      .sort({ day: 1, timeSlot: 1 });
+
+    res.status(200).json({ lectures });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch lectures for teacher", error });
   }
 };
 

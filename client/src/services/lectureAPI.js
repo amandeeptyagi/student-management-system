@@ -4,16 +4,20 @@ import API from "@/lib/axios"; // Axios instance with baseURL: http://localhost:
 
 // Assign a new lecture
 export const assignLecture = (data) =>
-  API.post("/lectures/assign", data);
+  API.post("/lecture/assign", data);
 
 // Get lectures for a specific course and semester
 export const getLecturesByCourseAndSemester = (courseId, semesterNumber) =>
-  API.get(`/lectures/${courseId}/semesters/${semesterNumber}`);
+  API.get(`/lecture/${courseId}/semesters/${semesterNumber}`);
+
+// Get lectures for a specific teacher
+export const getLecturesByTeacher = (teacherId) =>
+  API.get(`/lecture/teacher/${teacherId}`);
 
 // Update an existing lecture
 export const updateLecture = (lectureId, data) =>
-  API.put(`/lectures/${lectureId}`, data);
+  API.put(`/lecture/${lectureId}`, data);
 
 // Delete a lecture
 export const deleteLecture = (lectureId) =>
-  API.delete(`/lectures/${lectureId}`);
+  API.delete(`/lecture/${lectureId}`);

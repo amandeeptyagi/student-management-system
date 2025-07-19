@@ -27,7 +27,10 @@ export const createCourse = async (req, res) => {
 // Get all courses of this admin
 export const getAllCourses = async (req, res) => {
   try {
-    const courses = await Course.find({ admin: req.user._id });
+    const courses = await Course.find({ admin: req.user._id }).populate({
+      path: "semesters.subjectIds",
+      select: "_id name code"
+       });
     res.status(200).json(courses);
   } catch (error) {
     res.status(500).json({ message: "Failed to get courses" });
