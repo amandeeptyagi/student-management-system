@@ -1,21 +1,34 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Users,
+  GraduationCap,
+  LogOut,
+  Menu,
+  Settings,
+  User,
+  ChevronRight,
+  BookOpen, 
+  ClipboardList, 
   Calendar, 
-  FileText, 
-  CheckSquare, 
-  BarChart,
-  User, 
-  LogOut, 
-  Menu, 
-  X 
+  BarChart,    
+  X,
+  FileText,
+  CheckSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+
 const TeacherSidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeItem, setActiveItem] = useState(location.pathname);
+
+  useEffect(() => {
+    setActiveItem(location.pathname);
+  },[location.pathname])
 
   // Navigation menu items
   const menuItems = [
@@ -51,71 +64,90 @@ const TeacherSidebar = () => {
     }
   ];
 
-  // Handle logout
-  const handleLogout = () => {
-    // Implement logout logic here
-    console.log('Logging out');
-    // Typically would include clearing authentication tokens, 
-    // redirecting to login page, etc.
+  const handleNavigation = (path) => {
+    setActiveItem(path);
+    setIsOpen(false); // Close mobile menu
+    // console.log(`Navigate to: ${path}`);
+    navigate(path);
   };
 
-  // Determine if a menu item is active
-  const isActive = (path) => window.location.pathname === path;
+  const handleLogout = () => {
+    localStorage.removeItem("user"); // ✅ Remove user data from localStorage
+    navigate("/"); // ✅ Redirect to login page after logout
+  };
 
+  const isActive = (path) => activeItem === path;
 
   return (
     <>
       {/* Mobile Hamburger Button */}
-      <button 
-        className="md:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-md shadow-md"
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-md border border-gray-200"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {/* Sidebar */}
-      <div 
+      <div
         className={`
-          fixed top-17 left-0  h-[90vh] w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+          fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out z-40
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:translate-x-0 z-40 pt-0 md:pt-0
+          md:translate-x-0 flex flex-col
         `}
       >
-        <div className="flex flex-col h-full">
-          {/* Logo and Title */}
-          <div className="flex items-center justify-center h-16 p-5 border-b">
-            <span className="text-xl font-bold text-green-700">
-              Teacher Portal
-            </span>
-          </div>
+        {/* Logo and Title */}
+        <div className="flex items-center justify-center h-16 px-6 border-b border-gray-100 flex-shrink-0">
+          <span className="text-lg font-bold text-green-700">
+            Teacher Panel
+          </span>
+        </div>
 
-          {/* Navigation Menu */}
-          <nav className="flex-grow p-4">
+        {/* Navigation Menu - Scrollable */}
+        <nav className="flex-1 overflow-y-auto py-4">
+          <div className="px-3 space-y-1">
             {menuItems.map((item) => (
-              <Link 
+              <button
                 key={item.path}
-                to={item.path}
+                onClick={() => handleNavigation(item.path)}
                 className={`
-                  flex items-center p-3 mb-2 rounded-lg transition-colors duration-200
-                  ${isActive(item.path) 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'hover:bg-gray-100 text-gray-700'}
+                  w-full flex items-center justify-between px-3 py-3 rounded-lg text-left transition-all duration-200 group
+                  ${isActive(item.path)
+                    ? 'bg-blue-50 text-green-700 border-r-2 border-green-700'
+                    : 'hover:bg-gray-50 text-gray-700 hover:text-gray-900'}
                 `}
               >
-                {item.icon}
-                {item.label}
-              </Link>
+                <div className="flex items-center space-x-3">
+                  <span className={`${isActive(item.path) ? 'text-green-700' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                    {item.icon}
+                  </span>
+                  <span className="font-medium">{item.label}</span>
+                </div>
+                {isActive(item.path) && (
+                  <ChevronRight className="h-4 w-4 text-green-700" />
+                )}
+              </button>
             ))}
-          </nav>
+          </div>
+        </nav>
 
-          
+        {/* Logout Button - Fixed at bottom */}
+        <div className="p-4 border-t border-gray-100 flex-shrink-0">
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
         </div>
       </div>
 
       {/* Overlay for mobile */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black opacity-50 z-30 md:hidden"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
