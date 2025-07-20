@@ -12,7 +12,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,6 @@ import {
   Pencil, 
   Trash2, 
   Plus, 
-  AlertCircle, 
   Search, 
   Filter, 
   X, 
@@ -36,7 +36,12 @@ import {
   Users,
   Calendar,
   Clock,
-  GraduationCap
+  GraduationCap,
+  Building,
+  Loader2,
+  Eye,
+  Edit,
+  Save
 } from "lucide-react";
 
 const timeSlots = [
@@ -78,6 +83,7 @@ const Lectures = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
   const [buttonLoading, setButtonLoading] = useState(false);
+  const [deletingLectureId, setDeletingLectureId] = useState(null);
 
   useEffect(() => {
     fetchCourses();
@@ -284,11 +290,14 @@ const Lectures = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this lecture?")) return;
     try {
+      setDeletingLectureId(id);
       await deleteLecture(id);
       toast.success("Lecture deleted successfully");
       fetchLectures();
     } catch (err) {
       toast.error("Failed to delete lecture");
+    } finally {
+      setDeletingLectureId(null);
     }
   };
 
@@ -347,72 +356,308 @@ const Lectures = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Enhanced Header */}
-        <div className="text-center space-y-4">
-          <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-2xl border border-white/50 shadow-lg">
-            <GraduationCap className="h-8 w-8 text-indigo-600" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Lecture Management System
-            </h1>
-          </div>
-          <p className="text-gray-600 text-lg">Efficiently organize and manage academic lectures</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Lecture Management</h1>
+          <p className="text-gray-600">Manage academic lectures and schedules</p>
         </div>
+        <Button
+          onClick={openAddForm}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Lecture
+        </Button>
+      </div>
 
-        {/* Enhanced Filters Card */}
-        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-3xl border border-white/60 shadow-2xl">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl text-white">
-              <Filter className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-800">Smart Search & Filters</h2>
-              <p className="text-gray-600 text-sm">Find lectures using advanced filtering options</p>
-            </div>
-            {hasActiveFilters && (
-              <Button 
-                onClick={clearAllFilters} 
-                variant="outline" 
-                size="sm"
-                className="bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:border-red-300 transition-all duration-200"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Clear All Filters
-              </Button>
-            )}
-          </div>
-
-          {/* Enhanced Search Bar */}
-          <div className="relative mb-6">
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-              <Search className="text-gray-400 h-5 w-5" />
-            </div>
-            <Input
+      {/* Filters */}
+      <div className="bg-white rounded-lg border p-4">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
               placeholder="Search lectures by teacher, subject, course, day, or time slot..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-14 text-lg border-2 border-gray-200 focus:border-indigo-400 focus:ring-indigo-400 rounded-2xl bg-white/50 backdrop-blur-sm transition-all duration-200"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
-          {/* Enhanced Filter Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <BookOpen className="h-4 w-4 text-indigo-500" />
-                Course
-              </label>
-              <Select value={selectedCourse} onValueChange={handleCourseChange}>
-                <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-indigo-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200">
+          {/* Course Filter */}
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-gray-400" />
+            <Select value={selectedCourse} onValueChange={handleCourseChange}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Select Course" />
+              </SelectTrigger>
+              <SelectContent>
+                {canSelectAllCourses && (
+                  <SelectItem value="all">All Courses</SelectItem>
+                )}
+                {courses.map((c) => (
+                  <SelectItem key={c._id} value={c._id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Semester Filter */}
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-400" />
+            <Select
+              value={selectedSemester}
+              onValueChange={handleSemesterChange}
+              disabled={!selectedCourse || selectedCourse === "all"}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Select Semester" />
+              </SelectTrigger>
+              <SelectContent>
+                {(semestersByCourseId[selectedCourse] || [])
+                  .filter((sem) => sem.number)
+                  .map((s) => (
+                    <SelectItem key={s._id} value={s.number}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Teacher Filter */}
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-gray-400" />
+            <Select value={filterByTeacher} onValueChange={handleTeacherChange}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filter by Teacher" />
+              </SelectTrigger>
+              <SelectContent>
+                {canSelectAllTeachers && (
+                  <SelectItem value="all">All Teachers</SelectItem>
+                )}
+                {teachers.map((t) => (
+                  <SelectItem key={t._id} value={t._id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <Button 
+              onClick={clearAllFilters} 
+              variant="outline" 
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Clear Filters
+            </Button>
+          )}
+        </div>
+
+        {/* Filter Rules Info */}
+        {hasActiveFilters && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="text-sm text-blue-700">
+              <p className="font-medium mb-1">Active Filters:</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedCourse && selectedCourse !== "all" && (
+                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                    Course: {courses.find(c => c._id === selectedCourse)?.name}
+                  </span>
+                )}
+                {selectedSemester && selectedSemester !== "all" && (
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                    Semester: {selectedSemester}
+                  </span>
+                )}
+                {filterByTeacher && filterByTeacher !== "all" && (
+                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                    Teacher: {teachers.find(t => t._id === filterByTeacher)?.name}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Lectures Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Lectures</p>
+              <p className="text-2xl font-bold text-gray-900">{sortedLectures.length}</p>
+            </div>
+            <div className="bg-blue-100 p-3 rounded-full">
+              <GraduationCap className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Teachers</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {new Set(sortedLectures.map(l => l.teacher._id)).size}
+              </p>
+            </div>
+            <div className="bg-green-100 p-3 rounded-full">
+              <Users className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Subjects</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {new Set(sortedLectures.map(l => l.subject._id)).size}
+              </p>
+            </div>
+            <div className="bg-purple-100 p-3 rounded-full">
+              <BookOpen className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Empty State */}
+      {!hasActiveFilters && (
+        <div className="bg-white rounded-lg border p-8 text-center">
+          <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <Search className="h-6 w-6 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Filters Applied</h3>
+          <p className="text-gray-600">Select course and semester or use filters to view lectures</p>
+        </div>
+      )}
+
+      {/* Lectures Table */}
+      {(selectedCourse && selectedSemester && selectedCourse !== "all" && selectedSemester !== "all") || filterByTeacher || searchTerm ? (
+        <div className="bg-white rounded-lg border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teacher</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Schedule</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-8 text-center">
+                      <div className='flex items-center justify-center min-h-20'>
+                        <Loader2 className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+                        <span className="text-lg text-gray-600">Loading lectures...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : sortedLectures.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                      No lectures found
+                    </td>
+                  </tr>
+                ) : (
+                  sortedLectures.map((lec) => (
+                    <tr key={lec._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">{lec.course.name}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          Semester {lec.semester}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{lec.subject.name}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-green-700">
+                              {lec.teacher.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">{lec.teacher.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{lec.day}</div>
+                        <div className="text-sm text-gray-500">{lec.timeSlot}</div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditForm(lec)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={deletingLectureId === lec._id}
+                            onClick={() => handleDelete(lec._id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            {deletingLectureId === lec._id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Add/Edit Form Dialog */}
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {isEdit ? "Edit Lecture" : "Create New Lecture"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Course</label>
+              <Select value={formSelectedCourse} onValueChange={handleFormCourseChange}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select Course" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-2">
-                  {canSelectAllCourses && (
-                    <SelectItem value="all" className="rounded-lg">All Courses</SelectItem>
-                  )}
+                <SelectContent>
                   {courses.map((c) => (
-                    <SelectItem key={c._id} value={c._id} className="rounded-lg">
+                    <SelectItem key={c._id} value={c._id}>
                       {c.name}
                     </SelectItem>
                   ))}
@@ -420,46 +665,59 @@ const Lectures = () => {
               </Select>
             </div>
 
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Calendar className="h-4 w-4 text-green-500" />
-                Semester
-              </label>
+            <div>
+              <label className="block text-sm font-medium mb-1">Semester</label>
               <Select
-                value={selectedSemester}
-                onValueChange={handleSemesterChange}
-                disabled={!selectedCourse || selectedCourse === "all"}
+                value={formSelectedSemester}
+                onValueChange={handleFormSemesterChange}
+                disabled={!formSelectedCourse}
               >
-                <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-green-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                <SelectTrigger>
                   <SelectValue placeholder="Select Semester" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-2">
-                  {(semestersByCourseId[selectedCourse] || [])
+                <SelectContent>
+                  {(semestersByCourseId[formSelectedCourse] || [])
                     .filter((sem) => sem.number)
-                    .map((s) => (
-                      <SelectItem key={s._id} value={s.number} className="rounded-lg">
-                        {s.name}
+                    .map((sem) => (
+                      <SelectItem key={sem.number} value={sem.number}>
+                        {sem.name}
                       </SelectItem>
                     ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Users className="h-4 w-4 text-purple-500" />
-                Teacher
-              </label>
-              <Select value={filterByTeacher} onValueChange={handleTeacherChange}>
-                <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-purple-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200">
-                  <SelectValue placeholder="Filter by Teacher" />
+            <div>
+              <label className="block text-sm font-medium mb-1">Subject</label>
+              <Select
+                value={selectedSubject}
+                onValueChange={setSelectedSubject}
+                disabled={!formSelectedSemester}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Subject" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-2">
-                  {canSelectAllTeachers && (
-                    <SelectItem value="all" className="rounded-lg">All Teachers</SelectItem>
-                  )}
+                <SelectContent>
+                  {getFormSubjects()
+                    .filter((sub) => sub && sub._id)
+                    .map((sub) => (
+                      <SelectItem key={sub._id} value={sub._id}>
+                        {sub.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Teacher</label>
+              <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Teacher" />
+                </SelectTrigger>
+                <SelectContent>
                   {teachers.map((t) => (
-                    <SelectItem key={t._id} value={t._id} className="rounded-lg">
+                    <SelectItem key={t._id} value={t._id}>
                       {t.name}
                     </SelectItem>
                   ))}
@@ -467,401 +725,65 @@ const Lectures = () => {
               </Select>
             </div>
 
-            <div className="space-y-3">
-              <label className="text-sm font-semibold text-gray-700">Actions</label>
-              <Button 
-                onClick={openAddForm} 
-                className="w-full h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-              >
-                <Plus className="mr-2 h-5 w-5" /> 
-                Add New Lecture
-              </Button>
+            <div>
+              <label className="block text-sm font-medium mb-1">Day</label>
+              <Select value={selectedDay} onValueChange={setSelectedDay}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {days.map((day) => (
+                    <SelectItem key={day} value={day}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Time Slot</label>
+              <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeSlots.map((slot) => (
+                    <SelectItem key={slot} value={slot}>
+                      {slot}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Enhanced Filter Rules Info */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
-              <div>
-                <p className="font-bold text-blue-800 mb-3">Smart Filter Rules:</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-700">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span>Select specific course to enable semester</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Course required for specific semester</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span>Cannot combine "All Courses" + "All Teachers"</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span>Teacher filters work independently</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Empty State */}
-        {!hasActiveFilters && (
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-3xl p-8">
-            <div className="flex items-center gap-4">
-              <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl text-white">
-                <Search className="h-8 w-8" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-indigo-800 mb-2">Ready to Search Lectures</h3>
-                <p className="text-indigo-700">Use the filters above or search bar to discover and manage lectures efficiently</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Enhanced Lectures Table */}
-        {(selectedCourse && selectedSemester && selectedCourse !== "all" && selectedSemester !== "all") || filterByTeacher || searchTerm ? (
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl border border-white/60 shadow-2xl overflow-hidden">
-            <div className="p-8 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl text-white">
-                    <GraduationCap className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-800">Lectures Overview</h3>
-                    <p className="text-gray-600">
-                      {loading ? "Loading lectures..." : `${sortedLectures.length} lecture(s) found`}
-                    </p>
-                  </div>
-                </div>
-                {hasActiveFilters && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedCourse && selectedCourse !== "all" && (
-                      <span className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-sm font-medium border border-indigo-200">
-                        Course: {courses.find(c => c._id === selectedCourse)?.name}
-                      </span>
-                    )}
-                    {selectedSemester && selectedSemester !== "all" && (
-                      <span className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium border border-green-200">
-                        Semester: {selectedSemester}
-                      </span>
-                    )}
-                    {filterByTeacher && filterByTeacher !== "all" && (
-                      <span className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium border border-purple-200">
-                        Teacher: {teachers.find(t => t._id === filterByTeacher)?.name}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="p-16 text-center">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mb-4"></div>
-                <p className="text-gray-600 font-semibold text-lg">Loading lectures...</p>
-                <p className="text-gray-500 text-sm">Please wait while we fetch the data</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                    <tr>
-                      <th className="text-left p-6 font-bold text-gray-700 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="h-4 w-4" />
-                          Course
-                        </div>
-                      </th>
-                      <th className="text-left p-6 font-bold text-gray-700 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          Semester
-                        </div>
-                      </th>
-                      <th className="text-left p-6 font-bold text-gray-700 border-b border-gray-200">Subject</th>
-                      <th className="text-left p-6 font-bold text-gray-700 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          Teacher
-                        </div>
-                      </th>
-                      <th className="text-left p-6 font-bold text-gray-700 border-b border-gray-200">Day</th>
-                      <th className="text-left p-6 font-bold text-gray-700 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          Time
-                        </div>
-                      </th>
-                      <th className="text-left p-6 font-bold text-gray-700 border-b border-gray-200">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedLectures.map((lec, index) => (
-                      <tr key={lec._id} className={`border-b border-gray-100 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
-                        <td className="p-6">
-                          <div className="font-semibold text-gray-900 text-lg">{lec.course.name}</div>
-                        </td>
-                        <td className="p-6">
-                          <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-4 py-2 rounded-full text-sm font-bold border border-blue-200">
-                            Semester {lec.semester}
-                          </span>
-                        </td>
-                        <td className="p-6 text-gray-700 font-medium">{lec.subject.name}</td>
-                        <td className="p-6">
-                          <div className="font-semibold text-indigo-700 text-lg">{lec.teacher.name}</div>
-                        </td>
-                        <td className="p-6">
-                          <span className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold border border-green-200">
-                            {lec.day}
-                          </span>
-                        </td>
-                        <td className="p-6">
-                          <span className="bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 px-4 py-2 rounded-full text-sm font-bold border border-orange-200">
-                            {lec.timeSlot}
-                          </span>
-                        </td>
-                        <td className="p-6">
-                          <div className="flex gap-3">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditForm(lec)}
-                              className="h-10 w-10 p-0 rounded-xl border-2 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-200 hover:scale-110"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDelete(lec._id)}
-                              className="h-10 w-10 p-0 rounded-xl border-2 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200 hover:scale-110"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {sortedLectures.length === 0 && !loading && (
-                      <tr>
-                        <td colSpan="7" className="p-16 text-center">
-                          <div className="flex flex-col items-center gap-4">
-                            <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl">
-                              <AlertCircle className="h-16 w-16 text-gray-400" />
-                            </div>
-                            <div>
-                              <p className="text-gray-600 font-bold text-xl mb-2">No lectures found</p>
-                              <p className="text-gray-500">Try adjusting your search criteria or filters</p>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        ) : null}
-
-        {/* Enhanced Add/Edit Form Dialog */}
-        <Dialog open={formOpen} onOpenChange={setFormOpen}>
-          <DialogContent className="max-w-lg bg-white/95 backdrop-blur-sm border-2 border-white/60 rounded-3xl shadow-2xl">
-            <DialogHeader className="pb-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl text-white">
-                  {isEdit ? <Pencil className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
-                </div>
-                <div>
-                  <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    {isEdit ? "Edit Lecture" : "Create New Lecture"}
-                    </DialogTitle>
-                 <p className="text-gray-600 text-sm">
-                   {isEdit ? "Update lecture information" : "Assign a new lecture to the schedule"}
-                 </p>
-               </div>
-             </div>
-           </DialogHeader>
-
-           <div className="space-y-6 pt-6">
-             <div className="space-y-3">
-               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                 <BookOpen className="h-4 w-4 text-indigo-500" />
-                 Course
-               </label>
-               <Select value={formSelectedCourse} onValueChange={handleFormCourseChange}>
-                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-indigo-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200">
-                   <SelectValue placeholder="Select Course" />
-                 </SelectTrigger>
-                 <SelectContent className="rounded-xl border-2">
-                   {courses.map((c) => (
-                     <SelectItem key={c._id} value={c._id} className="rounded-lg">
-                       {c.name}
-                     </SelectItem>
-                   ))}
-                 </SelectContent>
-               </Select>
-             </div>
-
-             <div className="space-y-3">
-               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                 <Calendar className="h-4 w-4 text-green-500" />
-                 Semester
-               </label>
-               <Select
-                 value={formSelectedSemester}
-                 onValueChange={handleFormSemesterChange}
-                 disabled={!formSelectedCourse}
-               >
-                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-green-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                   <SelectValue placeholder="Select Semester" />
-                 </SelectTrigger>
-                 <SelectContent className="rounded-xl border-2">
-                   {(semestersByCourseId[formSelectedCourse] || [])
-                     .filter((sem) => sem.number)
-                     .map((sem) => (
-                       <SelectItem key={sem.number} value={sem.number} className="rounded-lg">
-                         {sem.name}
-                       </SelectItem>
-                     ))}
-                 </SelectContent>
-               </Select>
-             </div>
-
-             <div className="space-y-3">
-               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                 <BookOpen className="h-4 w-4 text-blue-500" />
-                 Subject
-               </label>
-               <Select
-                 value={selectedSubject}
-                 onValueChange={setSelectedSubject}
-                 disabled={!formSelectedSemester}
-               >
-                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                   <SelectValue placeholder="Select Subject" />
-                 </SelectTrigger>
-                 <SelectContent className="rounded-xl border-2">
-                   {getFormSubjects()
-                     .filter((sub) => sub && sub._id)
-                     .map((sub) => (
-                       <SelectItem key={sub._id} value={sub._id} className="rounded-lg">
-                         {sub.name}
-                       </SelectItem>
-                     ))}
-                 </SelectContent>
-               </Select>
-             </div>
-
-             <div className="space-y-3">
-               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                 <Users className="h-4 w-4 text-purple-500" />
-                 Teacher
-               </label>
-               <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-purple-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200">
-                   <SelectValue placeholder="Select Teacher" />
-                 </SelectTrigger>
-                 <SelectContent className="rounded-xl border-2">
-                   {teachers.map((t) => (
-                     <SelectItem key={t._id} value={t._id} className="rounded-lg">
-                       {t.name}
-                     </SelectItem>
-                   ))}
-                 </SelectContent>
-               </Select>
-             </div>
-
-             <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-3">
-                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                   <Calendar className="h-4 w-4 text-emerald-500" />
-                   Day
-                 </label>
-                 <Select value={selectedDay} onValueChange={setSelectedDay}>
-                   <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-emerald-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200">
-                     <SelectValue placeholder="Select Day" />
-                   </SelectTrigger>
-                   <SelectContent className="rounded-xl border-2">
-                     {days.map((day) => (
-                       <SelectItem key={day} value={day} className="rounded-lg">
-                         {day}
-                       </SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-               </div>
-
-               <div className="space-y-3">
-                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                   <Clock className="h-4 w-4 text-orange-500" />
-                   Time Slot
-                 </label>
-                 <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
-                   <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-orange-400 rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200">
-                     <SelectValue placeholder="Select Time" />
-                   </SelectTrigger>
-                   <SelectContent className="rounded-xl border-2">
-                     {timeSlots.map((slot) => (
-                       <SelectItem key={slot} value={slot} className="rounded-lg">
-                         {slot}
-                       </SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-               </div>
-             </div>
-
-             {/* Form Validation Info */}
-             <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-4">
-               <div className="flex items-center gap-3">
-                 <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0" />
-                 <div className="text-sm text-yellow-800">
-                   <p className="font-semibold mb-1">Required Fields:</p>
-                   <p>All fields must be selected to {isEdit ? "update" : "create"} the lecture.</p>
-                 </div>
-               </div>
-             </div>
-
-             <div className="flex gap-4 pt-6 border-t border-gray-200">
-               <Button
-                 onClick={handleSubmit}
-                 disabled={buttonLoading || !formSelectedCourse || !formSelectedSemester || !selectedSubject || !selectedTeacher || !selectedDay || !selectedTimeSlot}
-                 className="flex-1 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-               >
-                 {buttonLoading ? (
-                   <>
-                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
-                     {isEdit ? "Updating..." : "Creating..."}
-                   </>
-                 ) : (
-                   <>
-                     {isEdit ? <Pencil className="mr-2 h-5 w-5" /> : <Plus className="mr-2 h-5 w-5" />}
-                     {isEdit ? "Update Lecture" : "Create Lecture"}
-                   </>
-                 )}
-               </Button>
-               <Button
-                 type="button"
-                 variant="outline"
-                 onClick={() => setFormOpen(false)}
-                 className="h-12 px-8 rounded-xl border-2 font-semibold transition-all duration-200 hover:scale-105"
-               >
-                 Cancel
-               </Button>
-             </div>
-           </div>
-         </DialogContent>
-       </Dialog>
-     </div>
-   </div>
- );
+          <DialogFooter className="pt-4">
+            <Button
+              onClick={handleSubmit}
+              disabled={buttonLoading || !formSelectedCourse || !formSelectedSemester || !selectedSubject || !selectedTeacher || !selectedDay || !selectedTimeSlot}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {buttonLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {isEdit ? "Updating..." : "Creating..."}
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  {isEdit ? "Update Lecture" : "Create Lecture"}
+                </>
+              )}
+            </Button>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 
 export default Lectures;

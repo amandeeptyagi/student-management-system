@@ -105,7 +105,7 @@ const StudentCourses = () => {
                     <div key={subject._id || index} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
                       <p className="font-medium text-gray-900">{subject.name}</p>
                       <p className="text-sm text-gray-500">Code: {subject.code}</p>
-                      {subject.teacher.name && <p className="text-sm text-gray-600">Instructor: {subject.teacher.name}</p>}
+                      {subject.teacher && <p className="text-sm text-gray-600">Instructor: {subject.teacher.name}</p>}
                     </div>
                   ))}
                 </div>

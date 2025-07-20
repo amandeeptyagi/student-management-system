@@ -56,7 +56,6 @@ const StudentDashboard = () => {
     try {
       const response = await getStudentProfile();
       setStudentData(response.data.student);
-      console.log(response);
     } catch (error) {
       console.error('Error fetching student data:', error);
       toast.error('Failed to fetch student data');
@@ -430,8 +429,8 @@ const StudentDashboard = () => {
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Schedule</h3>
             <div className="space-y-3">
-              {todaySchedule.map((schedule) => (
-                <ScheduleCard key={schedule.id} schedule={schedule} />
+              {todaySchedule && todaySchedule.map((schedule) => (
+                <ScheduleCard key={schedule && schedule.id} schedule={schedule && schedule} />
               ))}
             </div>
           </div>

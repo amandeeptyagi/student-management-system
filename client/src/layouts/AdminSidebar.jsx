@@ -93,7 +93,7 @@ const AdminSidebar = () => {
         {/* Logo and Title */}
         <div className="flex items-center justify-center h-16 px-6 border-b border-gray-100 flex-shrink-0">
           <span className="text-lg font-bold text-blue-700">
-            Super Admin Panel
+            Admin Panel
           </span>
         </div>
 

@@ -95,7 +95,8 @@ export const getTodayScheduleForStudent = async (req, res) => {
     const student = await Student.findById(req.user._id);
     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    const today = moment().format("dddd").toLowerCase(); // e.g., "wednesday"
+    // const today = moment().format("dddd").toLowerCase(); // e.g., "wednesday"
+    const today = moment().format("dddd"); // e.g., "Wednesday"
 
     // Step 2: Find today's lectures matching student’s course, semester & admin
     const lectures = await Lecture.find({
