@@ -81,7 +81,7 @@ const SuperAdminSidebar = () => {
       >
         {/* Logo and Title */}
         <div className="flex items-center justify-center h-16 px-6 border-b border-gray-100 flex-shrink-0">
-          <span className="text-lg font-bold text-blue-700">
+          <span className="text-lg font-bold text-red-700">
             Super Admin Panel
           </span>
         </div>
@@ -96,18 +96,18 @@ const SuperAdminSidebar = () => {
                 className={`
                   w-full flex items-center justify-between px-3 py-3 rounded-lg text-left transition-all duration-200 group
                   ${isActive(item.path)
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                    ? 'bg-red-50 text-red-700 border-r-2 border-red-700'
                     : 'hover:bg-gray-50 text-gray-700 hover:text-gray-900'}
                 `}
               >
                 <div className="flex items-center space-x-3">
-                  <span className={`${isActive(item.path) ? 'text-blue-700' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                  <span className={`${isActive(item.path) ? 'text-red-700' : 'text-gray-500 group-hover:text-gray-700'}`}>
                     {item.icon}
                   </span>
                   <span className="font-medium">{item.label}</span>
                 </div>
                 {isActive(item.path) && (
-                  <ChevronRight className="h-4 w-4 text-blue-700" />
+                  <ChevronRight className="h-4 w-4 text-red-700" />
                 )}
               </button>
             ))}

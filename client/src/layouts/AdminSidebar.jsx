@@ -9,7 +9,10 @@ import {
   X,
   Settings,
   User,
-  ChevronRight
+  ChevronRight,
+  Users2Icon,
+  BookOpen,
+  ClipboardList
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -27,13 +30,13 @@ const AdminSidebar = () => {
     const menuItems = [
       { 
         icon: <LayoutDashboard className="mr-3 h-5 w-5" />, 
-        label: 'Profile', 
-        path: '/admin/profile' 
-      },
-      { 
-        icon: <LayoutDashboard className="mr-3 h-5 w-5" />, 
         label: 'Dashboard', 
         path: '/admin/dashboard' 
+      },
+      { 
+        icon: <User className="mr-3 h-5 w-5" />, 
+        label: 'Profile', 
+        path: '/admin/profile' 
       },
       { 
         icon: <Users className="mr-3 h-5 w-5" />, 
@@ -41,17 +44,17 @@ const AdminSidebar = () => {
         path: '/admin/students' 
       },
       { 
-        icon: <GraduationCap className="mr-3 h-5 w-5" />, 
+        icon: <Users2Icon className="mr-3 h-5 w-5" />, 
         label: 'Teachers', 
         path: '/admin/teachers' 
       },
       { 
-        icon: <GraduationCap className="mr-3 h-5 w-5" />, 
+        icon: <ClipboardList className="mr-3 h-5 w-5" />, 
         label: 'Lectures', 
         path: '/admin/assign-lecture' 
       },
       { 
-        icon: <GraduationCap className="mr-3 h-5 w-5" />, 
+        icon: <BookOpen className="mr-3 h-5 w-5" />, 
         label: 'Courses', 
         path: '/admin/courses' 
       },

@@ -1,211 +1,305 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Users, 
-  GraduationCap, 
-  BookOpen, 
-  Bell, 
-  Newspaper, 
-  Calendar, 
-  FileText, 
-  BarChart2, 
-  Settings, 
-  User
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  Users,
+  GraduationCap,
+  BookOpen,
+  Calendar,
+  UserCheck,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Settings,
+  Loader2
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
+// Import your API functions
+import {
+  getAdminProfile,
+  getAllStudents,
+  getAllTeachers,
+} from '@/services/adminAPI';
+
+import {
+  getAllCourses
+} from '@/services/courseAPI';
+
+import {
+  getLecturesByCourseAndSemester
+} from '@/services/lectureAPI';
 
 const AdminDashboard = () => {
-  // Stats for the top cards
-  const stats = [
-    { 
-      icon: <Users className="h-8 w-8 text-blue-500" />, 
-      title: 'Total Students', 
-      value: '1,234' 
-    },
-    { 
-      icon: <GraduationCap className="h-8 w-8 text-green-500" />, 
-      title: 'Total Teachers', 
-      value: '87' 
-    },
-    { 
-      icon: <BookOpen className="h-8 w-8 text-purple-500" />, 
-      title: 'Total Courses', 
-      value: '42' 
+  const navigate = useNavigate();
+  const [adminData, setAdminData] = useState(null);
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalCourses: 0,
+    totalLectures: 0
+  });
+  const [recentStudents, setRecentStudents] = useState([]);
+  const [recentTeachers, setRecentTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch admin profile
+      const adminResponse = await getAdminProfile();
+      setAdminData(adminResponse.data);
+
+      // Fetch all data for stats
+      const [studentsRes, teachersRes, coursesRes] = await Promise.all([
+        getAllStudents(),
+        getAllTeachers(),
+        getAllCourses()
+      ]);
+
+      const students = studentsRes.data;
+      const teachers = teachersRes.data;
+      const courses = coursesRes.data;
+
+      // Calculate total lectures (approximate)
+      let totalLectures = 0;
+      for (const course of courses) {
+        for (const semester of course.semesters) {
+          if (semester.subjectIds?.length) {
+            totalLectures += semester.subjectIds.length;
+          }
+        }
+      }
+
+      setStats({
+        totalStudents: students.length,
+        totalTeachers: teachers.length,
+        totalCourses: courses.length,
+        totalLectures
+      });
+
+      // Set recent data (last 5)
+      setRecentStudents(students.slice(0, 5));
+      setRecentTeachers(teachers.slice(0, 5));
+
+    } catch (error) {
+      toast.error('Failed to load dashboard data');
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // Sample data for the detailed section cards
-  const eventsData = [
-    { id: 1, title: 'Annual School Conference', date: 'April 15, 2025', description: 'Annual conference for all staff members to discuss school improvement strategies.' },
-    { id: 2, title: 'Board Meeting', date: 'April 5, 2025', description: 'Quarterly meeting with the school board to review budget and performance metrics.' },
-    { id: 3, title: 'Teacher Evaluation Day', date: 'April 20, 2025', description: 'Scheduled teacher evaluations for the spring semester.' }
-  ];
+  const StatCard = ({ icon: Icon, title, value, color }) => (
+    <div className="bg-white rounded-lg shadow-sm p-6 border-l-4" style={{ borderLeftColor: color }}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-gray-600 text-sm font-medium">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+        </div>
+        <div className="p-3 rounded-full" style={{ backgroundColor: `${color}20` }}>
+          <Icon className="w-6 h-6" style={{ color }} />
+        </div>
+      </div>
+    </div>
+  );
 
-  const newsData = [
-    { id: 1, title: 'School Budget Approved', date: 'March 28, 2025', description: 'The district has approved our proposed budget for the upcoming academic year.' },
-    { id: 2, title: 'New Computer Lab Completed', date: 'March 25, 2025', description: 'The renovation of our computer lab is now complete with 30 new workstations.' },
-    { id: 3, title: 'District Recognition', date: 'March 20, 2025', description: 'Our school received recognition for outstanding academic improvement.' }
-  ];
+  const QuickActionCard = ({ icon: Icon, title, description, onClick, color }) => (
+    <div
+      onClick={onClick}
+      className="bg-white rounded-lg shadow-sm p-4 border hover:shadow-md transition-shadow cursor-pointer"
+    >
+      <div className="flex items-center space-x-3">
+        <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}20` }}>
+          <Icon className="w-5 h-5" style={{ color }} />
+        </div>
+        <div>
+          <h3 className="font-medium text-gray-900">{title}</h3>
+          <p className="text-sm text-gray-600">{description}</p>
+        </div>
+      </div>
+    </div>
+  );
 
-  const noticesData = [
-    { id: 1, title: 'End of Year Procedures', date: 'March 30, 2025', description: 'All staff members must complete end-of-year inventory by May 15.' },
-    { id: 2, title: 'Budget Requests Due', date: 'April 10, 2025', description: 'Department heads should submit budget requests for the next academic year.' },
-    { id: 3, title: 'Summer Maintenance Schedule', date: 'April 5, 2025', description: 'Facility maintenance schedule has been posted. Please coordinate with maintenance staff for classroom access.' }
-  ];
-
-  const calendarEvents = [
-    { id: 1, title: 'Administrative Staff Meeting', time: '9:00 AM - 10:30 AM', date: 'Monday, March 31' },
-    { id: 2, title: 'Budget Review', time: '1:00 PM - 3:00 PM', date: 'Tuesday, April 1' },
-    { id: 3, title: 'Department Chair Meeting', time: '3:30 PM - 5:00 PM', date: 'Wednesday, April 2' },
-    { id: 4, title: 'Student Council Presentation', time: '10:00 AM - 11:00 AM', date: 'Thursday, April 3' },
-    { id: 5, title: 'Parent Committee Meeting', time: '6:00 PM - 7:30 PM', date: 'Thursday, April 3' }
-  ];
-
-
-  const [username, setUsername] = useState({ name: '' });
-
-useEffect(() => {
-  axios.get('http://localhost:5000/api/admin/profile', { withCredentials: true })
-    .then(response => {
-      setUsername({ name: response.data.name });
-    })
-    .catch(error => console.error('Error fetching username:', error));
-}, []);
-
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+        <span className="text-lg text-gray-600">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Admin Dashboard
-        </h1>
-        <div className="text-sm text-gray-500">
-          Welcome back, {username.name}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600">Welcome back, {adminData?.name}</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">{adminData?.instituteName}</p>
+                <p className="text-sm text-gray-600">{adminData?.email}</p>
+              </div>
+              <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                <Settings className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              {stat.icon}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            icon={Users}
+            title="Total Students"
+            value={stats.totalStudents}
+            color="#3B82F6"
+          />
+          <StatCard
+            icon={UserCheck}
+            title="Total Teachers"
+            value={stats.totalTeachers}
+            color="#10B981"
+          />
+          <StatCard
+            icon={BookOpen}
+            title="Total Courses"
+            value={stats.totalCourses}
+            color="#F59E0B"
+          />
+          <StatCard
+            icon={Calendar}
+            title="Total Subjects"
+            value={stats.totalLectures}
+            color="#8B5CF6"
+          />
+        </div>
 
-      {/* Detailed Information Cards */}
-      <div className="space-y-6">
-        {/* Events Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-xl font-bold">
-              <div className="flex items-center">
-                <Calendar className="h-6 w-6 text-orange-500 mr-2" />
-                Events
-              </div>
-            </CardTitle>
-            <button className="text-sm text-blue-600 hover:underline">View All</button>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
-              {eventsData.map(event => (
-                <div key={event.id} className="border-b pb-3 last:border-0">
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold">{event.title}</h3>
-                    <span className="text-sm text-gray-500">{event.date}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <QuickActionCard
+              icon={Plus}
+              title="Add Student"
+              description="Register new student"
+              onClick={() => { toast.success('Navigate to Add Student'); navigate('/admin/students'); }}
+              color="#3B82F6"
+            />
+            <QuickActionCard
+              icon={Plus}
+              title="Add Teacher"
+              description="Register new teacher"
+              onClick={() => { toast.success('Navigate to Add Teacher'); navigate('/admin/teachers') }}
+              color="#10B981"
+            />
+            <QuickActionCard
+              icon={Plus}
+              title="Create Course"
+              description="Add new course"
+              onClick={() => { toast.success('Navigate to Create Course'); navigate('/admin/courses') }}
+              color="#F59E0B"
+            />
+            <QuickActionCard
+              icon={Calendar}
+              title="Assign Lecture"
+              description="Schedule new lecture"
+              onClick={() => { toast.success('Navigate to Assign Lecture'); navigate('/admin/assign-lecture') }}
+              color="#8B5CF6"
+            />
+          </div>
+        </div>
 
-        {/* News Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-xl font-bold">
-              <div className="flex items-center">
-                <Newspaper className="h-6 w-6 text-blue-500 mr-2" />
-                News
+        {/* Recent Data */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recent Students */}
+          <div className="bg-white rounded-lg shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">Recent Students</h3>
+                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  View All
+                </button>
               </div>
-            </CardTitle>
-            <button className="text-sm text-blue-600 hover:underline">View All</button>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
-              {newsData.map(item => (
-                <div key={item.id} className="border-b pb-3 last:border-0">
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold">{item.title}</h3>
-                    <span className="text-sm text-gray-500">{item.date}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                </div>
-              ))}
             </div>
-          </CardContent>
-        </Card>
+            <div className="divide-y divide-gray-200">
+              {recentStudents.length > 0 ? (
+                recentStudents.map((student) => (
+                  <div key={student._id} className="px-6 py-4 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-gray-900">{student.name}</p>
+                      <p className="text-sm text-gray-600">Roll: {student.rollNo}</p>
+                      <p className="text-sm text-gray-600">
+                        {student.course?.name} - Sem {student.semester}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button className="text-blue-600 hover:text-blue-700">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button className="text-green-600 hover:text-green-700">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-6 py-8 text-center text-gray-500">
+                  No students found
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* Notices Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-xl font-bold">
-              <div className="flex items-center">
-                <Bell className="h-6 w-6 text-red-500 mr-2" />
-                Notices
+          {/* Recent Teachers */}
+          <div className="bg-white rounded-lg shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">Recent Teachers</h3>
+                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  View All
+                </button>
               </div>
-            </CardTitle>
-            <button className="text-sm text-blue-600 hover:underline">View All</button>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
-              {noticesData.map(notice => (
-                <div key={notice.id} className="border-b pb-3 last:border-0">
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold">{notice.title}</h3>
-                    <span className="text-sm text-gray-500">{notice.date}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">{notice.description}</p>
-                </div>
-              ))}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Calendar Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-xl font-bold">
-              <div className="flex items-center">
-                <Calendar className="h-6 w-6 text-purple-500 mr-2" />
-                Calendar
-              </div>
-            </CardTitle>
-            <button className="text-sm text-blue-600 hover:underline">Full Calendar</button>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-2">
-              {calendarEvents.map(event => (
-                <div key={event.id} className="flex border-l-4 border-purple-500 pl-3 py-2 bg-gray-50">
-                  <div className="w-32 flex-shrink-0">
-                    <div className="text-sm font-medium">{event.date}</div>
-                    <div className="text-xs text-gray-500">{event.time}</div>
+            <div className="divide-y divide-gray-200">
+              {recentTeachers.length > 0 ? (
+                recentTeachers.map((teacher) => (
+                  <div key={teacher._id} className="px-6 py-4 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-gray-900">{teacher.name}</p>
+                      <p className="text-sm text-gray-600">{teacher.department}</p>
+                      <p className="text-sm text-gray-600">{teacher.specialization}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button className="text-blue-600 hover:text-blue-700">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button className="text-green-600 hover:text-green-700">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex-grow">
-                    <div className="text-sm font-medium">{event.title}</div>
-                  </div>
+                ))
+              ) : (
+                <div className="px-6 py-8 text-center text-gray-500">
+                  No teachers found
                 </div>
-              ))}
+              )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
