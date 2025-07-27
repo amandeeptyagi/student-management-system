@@ -24,42 +24,42 @@ const AdminSidebar = () => {
 
   useEffect(() => {
     setActiveItem(location.pathname);
-  },[location.pathname])
+  }, [location.pathname])
 
   // Navigation menu items
-    const menuItems = [
-      { 
-        icon: <LayoutDashboard className="mr-3 h-5 w-5" />, 
-        label: 'Dashboard', 
-        path: '/admin/dashboard' 
-      },
-      { 
-        icon: <User className="mr-3 h-5 w-5" />, 
-        label: 'Profile', 
-        path: '/admin/profile' 
-      },
-      { 
-        icon: <Users className="mr-3 h-5 w-5" />, 
-        label: 'Students', 
-        path: '/admin/students' 
-      },
-      { 
-        icon: <Users2Icon className="mr-3 h-5 w-5" />, 
-        label: 'Teachers', 
-        path: '/admin/teachers' 
-      },
-      { 
-        icon: <ClipboardList className="mr-3 h-5 w-5" />, 
-        label: 'Lectures', 
-        path: '/admin/assign-lecture' 
-      },
-      { 
-        icon: <BookOpen className="mr-3 h-5 w-5" />, 
-        label: 'Courses', 
-        path: '/admin/courses' 
-      },
-  
-    ];
+  const menuItems = [
+    {
+      icon: <LayoutDashboard className="mr-3 h-5 w-5" />,
+      label: 'Dashboard',
+      path: '/admin/dashboard'
+    },
+    {
+      icon: <User className="mr-3 h-5 w-5" />,
+      label: 'Profile',
+      path: '/admin/profile'
+    },
+    {
+      icon: <Users className="mr-3 h-5 w-5" />,
+      label: 'Students',
+      path: '/admin/students'
+    },
+    {
+      icon: <Users2Icon className="mr-3 h-5 w-5" />,
+      label: 'Teachers',
+      path: '/admin/teachers'
+    },
+    {
+      icon: <ClipboardList className="mr-3 h-5 w-5" />,
+      label: 'Lectures',
+      path: '/admin/assign-lecture'
+    },
+    {
+      icon: <BookOpen className="mr-3 h-5 w-5" />,
+      label: 'Courses',
+      path: '/admin/courses'
+    },
+
+  ];
 
   const handleNavigation = (path) => {
     setActiveItem(path);
@@ -79,16 +79,17 @@ const AdminSidebar = () => {
     <>
       {/* Mobile Hamburger Button */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-md border border-gray-200"
+        className="md:hidden fixed top-3 left-4 z-50 bg-none p-2 rounded-lg "
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isOpen ? <X /> : <Menu />}
       </button>
 
       {/* Sidebar */}
       <div
         className={`
-          fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out z-40
+          fixed top-16 left-0 h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] max-h-[calc(100dvh-4rem)]
+          w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out z-40
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0 flex flex-col
         `}
@@ -144,7 +145,7 @@ const AdminSidebar = () => {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          className="fixed inset-0  bg-opacity-50 z-30 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}

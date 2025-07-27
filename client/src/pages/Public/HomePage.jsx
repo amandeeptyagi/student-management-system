@@ -60,7 +60,7 @@ const HomePage = () => {
         }}
       >
         <div className="max-w-4xl mx-auto text-center z-10">
-          <h1 className="text-5xl font-bold text-blue-800 mb-6 mt-50">
+          <h1 className="text-5xl font-bold text-blue-800 mb-6 mt-0 md:mt-40">
             Student Management System
           </h1>
           <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
