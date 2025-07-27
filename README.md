@@ -4,6 +4,10 @@ A full-featured web-based **Student Management System** for colleges to manage s
 
 ---
 
+🔗 **Live App**: [View on Vercel](https://sms100.vercel.app/)
+
+---
+
 ## 🧾 Features
 
 ### ✅ Multi-Role Access:
